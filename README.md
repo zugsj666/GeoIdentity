@@ -4,7 +4,7 @@
 
 本地运行：`npm ci` → `npm run dev`。检查：`npm run build`、`npm test`、`npm run test:ui`。
 
-本 Fork 在线访问：**https://geoidentity-zugsj.pages.dev**。使用原项目推荐的 Cloudflare Pages Direct Upload：运行 `npm run build`，将 `dist` 内容上传到 Pages 项目 `geoidentity-zugsj`。当前为直接上传部署，GitHub 推送不会自动更新网站。下方其他演示域名和部署账户说明来自上游。
+本 Fork 在线访问：**https://geo.zugsj.com**（备用：**https://geoidentity-zugsj.pages.dev**）。使用原项目推荐的 Cloudflare Pages Direct Upload：运行 `npm run build`，将 `dist` 内容上传到 Pages 项目 `geoidentity-zugsj`。当前为直接上传部署，GitHub 推送不会自动更新网站。下方其他演示域名和部署账户说明来自上游。
 
 <p align="center">
   <img src="public/favicon.svg" width="72" height="72" alt="GeoIdentity Logo" />
