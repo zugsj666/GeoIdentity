@@ -10,14 +10,17 @@ try {
   const { default: Card } = await server.ssrLoadModule('/src/components/IdentityCard.vue');
   const { default: Controls } = await server.ssrLoadModule('/src/components/FilterControls.vue');
   const { default: Regions } = await server.ssrLoadModule('/src/components/RegionSelector.vue');
-  const { generateIdentity } = await server.ssrLoadModule('/src/services/identityGenerator.ts');
+  const { generateIdentity, generateIdentityFromAddress } = await server.ssrLoadModule('/src/services/identityGenerator.ts');
   const { COUNTRIES, POPULAR_COUNTRY_CODES } = await server.ssrLoadModule('/src/data/countries.ts');
   const { useI18n } = await server.ssrLoadModule('/src/i18n/index.ts');
   for (const locale of ['zh', 'en']) {
     useI18n().locale.value = locale;
     for (const mode of ['landmark', 'derivation', 'residential', 'sourced']) {
-      const filters = { gender: 'random', ageRange: 'random', addressMode: mode };
+      const filters = { gender: 'random', ageRange: '18-25', addressMode: mode };
       const identity = generateIdentity('US', filters);
+      assert.ok(identity.basic.age >= 18 && identity.basic.age <= 25);
+      const fromAddress = generateIdentityFromAddress(identity.address, filters);
+      assert.ok(fromAddress.basic.age >= 18 && fromAddress.basic.age <= 25);
       const html = await renderToString(createSSRApp(Card, { identity, isFav: true }));
       assert.equal((html.match(/class="[^"]*\bcopy-row\b/g) || []).length, 13);
       assert.ok(html.includes(identity.basic.firstName));
@@ -30,9 +33,9 @@ try {
       assert.ok(html.includes('aria-label=') && html.includes('type="button"'));
       const controls = await renderToString(createSSRApp(Controls, { filters, countryCode: 'US', selectedState: '' }));
       assert.equal((controls.match(/class="[^"]*\bmode-button\b/g) || []).length, 4);
-      assert.equal((controls.match(/aria-pressed="true"/g) || []).length, 1);
-      assert.ok(controls.indexOf('disabled:opacity-70') < controls.indexOf('<details'));
-      assert.ok(!/<details[^>]*\bopen\b/.test(controls));
+      assert.equal((controls.match(/<button(?=[^>]*\bmode-button\b)[^>]*aria-pressed="true"/g) || []).length, 1);
+      assert.ok(controls.indexOf('id="generator-age"') < controls.indexOf('disabled:opacity-70'));
+      assert.ok(!controls.includes('<details'));
     }
   }
   const regions = await renderToString(createSSRApp(Regions, { selectedCountryCode: 'CA' }));

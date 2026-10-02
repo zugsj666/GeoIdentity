@@ -27,16 +27,19 @@
       <div v-show="currentView === 'generator'" class="generator-layout">
         <RegionSelector class="region-sidebar" :selected-country-code="selectedCountryCode" @update:selected-country-code="handleCountryChange" />
         <div class="space-y-3 min-w-0">
-          <div class="flex flex-wrap items-center justify-between gap-2">
+          <FilterControls :show-address-controls="activeGeneratorTab === 'standard'" :filters="filters" :country-code="selectedCountryCode" :selected-state="selectedState" :is-generating="isGenerating" @update:filters="handleFiltersChange" @update:selected-state="handleStateChange" @generate="handleGenerate">
+            <template #switcher>
             <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button type="button" @click="selectGeneratorTab('standard')" class="generator-tab" :class="{ active: activeGeneratorTab === 'standard' }"><Compass class="w-3.5 h-3.5" />{{ locale === 'zh' ? '按地区生成' : 'By region' }}</button>
               <button type="button" @click="selectGeneratorTab('ip')" class="generator-tab" :class="{ active: activeGeneratorTab === 'ip' }"><Globe class="w-3.5 h-3.5" />{{ locale === 'zh' ? '按 IP 生成' : 'By IP' }}</button>
             </div>
+            </template>
+            <template #actions>
             <button type="button" @click="isBatchModalOpen = true" class="text-sm font-medium text-primary-600 dark:text-primary-400 px-3 py-2">{{ t('nav.batch') }} ↗</button>
-          </div>
-          <FilterControls v-show="activeGeneratorTab === 'standard'" :filters="filters" :country-code="selectedCountryCode" :selected-state="selectedState" :is-generating="isGenerating" @update:filters="handleFiltersChange" @update:selected-state="handleStateChange" @generate="handleGenerate" />
+            </template>
+          </FilterControls>
           <p v-if="addressError" role="alert" class="text-sm text-amber-700 dark:text-amber-300">{{ addressError }}</p>
-          <IpAddressCard v-if="activeGeneratorTab === 'ip'" @identity-generated="handleIpIdentityGenerated" @no-address="handleIpNoAddress" />
+          <IpAddressCard v-if="activeGeneratorTab === 'ip'" :filters="filters" @identity-generated="handleIpIdentityGenerated" @no-address="handleIpNoAddress" />
           <IdentityCard v-if="currentIdentity" :identity="currentIdentity" :is-fav="isCurrentFavorite" @copy-field="handleCopyFeedback" @toggle-favorite="handleToggleFav" @open-disclaimer="openDisclaimer('disclaimer')" />
         </div>
       </div>
@@ -120,7 +123,7 @@ const selectedState = ref<string>('');
 const savedMode = localStorage.getItem('geo_address_mode') as AddressMode | null;
 const filters = ref<FilterOptions>({
   gender: 'random',
-  ageRange: 'random',
+  ageRange: '18-25',
   addressMode: savedMode && ['sourced', 'landmark', 'derivation', 'residential'].includes(savedMode) ? savedMode : 'residential'
 });
 
@@ -319,7 +322,7 @@ onMounted(() => {
   handleHashChange();
 
   // Load first identity
-  if (historyList.value.length > 0 && historyList.value[0].address.addressMode === filters.value.addressMode) {
+  if (historyList.value.length > 0 && historyList.value[0].address.addressMode === filters.value.addressMode && historyList.value[0].basic.age >= 18 && historyList.value[0].basic.age <= 25) {
     currentIdentity.value = historyList.value[0];
     selectedCountryCode.value = currentIdentity.value.countryCode;
     selectedState.value = currentIdentity.value.address.state;
@@ -334,10 +337,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.generator-layout { @apply w-full max-w-[960px] mx-auto space-y-4; }
+.generator-layout { @apply w-full max-w-[1100px] mx-auto space-y-4; }
 @media (min-width: 1280px) {
-  .generator-layout { @apply space-y-0; position: relative; width: min(960px, calc(100% - 568px)); }
-  .region-sidebar { position: absolute; width: 260px; right: calc(100% + 24px); top: 0; }
+  .generator-layout { @apply space-y-0; position: relative; width: min(1100px, calc(100% - 440px)); }
+  .region-sidebar { position: absolute; width: 200px; right: calc(100% + 20px); top: 0; }
 }
 
 .region-nav { @apply px-3 py-2 text-sm font-medium whitespace-nowrap rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors; }

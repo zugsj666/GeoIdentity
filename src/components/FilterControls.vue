@@ -1,34 +1,13 @@
 <template>
-  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-2 text-base font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
-      <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-12 !text-sm flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
-        <option value="">{{ t('regions.selectState') }}</option>
-        <option v-for="state in availableStates" :key="state.code" :value="state.code">{{ locale === 'zh' ? state.nameZh : state.nameEn }} ({{ state.code }})</option>
-      </select>
-        <button
-          type="button"
-          @click="$emit('generate')"
-          :disabled="isGenerating"
-          class="w-auto inline-flex items-center justify-center gap-2 min-w-[156px] h-12 px-6 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <Sparkles class="w-5 h-5" :class="{ 'animate-spin': isGenerating }" />
-          <span>{{ isGenerating ? t('filter.generating') : (locale === 'zh' ? '生成新资料' : 'Generate') }}</span>
-        </button>
-
-    </div>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" :aria-label="t('addressMode.title')">
-      <button v-for="mode in modes" :key="mode.id" type="button" @click="updateMode(mode.id)" :aria-pressed="currentMode === mode.id" :title="t('addressMode.' + mode.desc)" class="mode-button" :data-color="mode.color" :class="{ active: currentMode === mode.id }"><component :is="mode.icon" class="w-4 h-4 shrink-0" /><span>{{ t('addressMode.' + mode.label) }}</span></button>
-    </div>
-    <!-- Bottom Secondary Filters & Generate Button Bar -->
-<details class="text-sm text-slate-500 dark:text-slate-400">
-      <summary class="cursor-pointer w-fit py-1 font-medium">{{ locale === 'zh' ? '更多筛选' : 'More filters' }}</summary>
-      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto mt-3">
+  <div class="space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <slot name="switcher" />
+      <div v-if="showAddressControls" class="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
         <!-- Gender Filter -->
         <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
           <button
             type="button"
-            @click="updateGender('random')"
+            @click="updateGender('random')" :aria-pressed="filters.gender === 'random'" :aria-label="t('filter.genderAll')"
             :class="[
               'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'random'
@@ -36,11 +15,11 @@
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             ]"
           >
-            {{ t('filter.genderAll') }}
+            {{ locale === 'zh' ? '随机' : 'Any' }}
           </button>
           <button
             type="button"
-            @click="updateGender('male')"
+            @click="updateGender('male')" :aria-pressed="filters.gender === 'male'" :aria-label="t('filter.genderMale')"
             :class="[
               'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'male'
@@ -48,11 +27,11 @@
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             ]"
           >
-            {{ t('filter.genderMale') }}
+            {{ locale === 'zh' ? '男' : 'Male' }}
           </button>
           <button
             type="button"
-            @click="updateGender('female')"
+            @click="updateGender('female')" :aria-pressed="filters.gender === 'female'" :aria-label="t('filter.genderFemale')"
             :class="[
               'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'female'
@@ -60,17 +39,17 @@
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             ]"
           >
-            {{ t('filter.genderFemale') }}
+            {{ locale === 'zh' ? '女' : 'Female' }}
           </button>
         </div>
 
         <!-- Age Range Filter -->
         <div class="flex items-center gap-1.5">
-          <label class="text-sm font-medium text-slate-500 dark:text-slate-400 shrink-0">
+          <label for="generator-age" class="sr-only">
             {{ t('filter.age') }}:
           </label>
           <select
-            :value="filters.ageRange"
+            id="generator-age" :value="filters.ageRange"
             @change="updateAge(($event.target as HTMLSelectElement).value as any)"
             class="text-base sm:text-sm font-medium bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer"
           >
@@ -94,12 +73,35 @@
           ]"
         >
           <Zap class="w-3.5 h-3.5" :class="{ 'fill-white': filters.isTaxFreeOnly, 'fill-amber-500 text-amber-500': !filters.isTaxFreeOnly }" />
-          <span>{{ t('filter.taxFreeOnly') }}</span>
+          <span>{{ locale === 'zh' ? '仅免税地址' : 'Tax-free only' }}</span>
         </button>
       </div>
+      <slot name="actions" />
+    </div>
+  <section v-if="showAddressControls" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2 text-base font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
+      <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-12 !text-sm flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
+        <option value="">{{ t('regions.selectState') }}</option>
+        <option v-for="state in availableStates" :key="state.code" :value="state.code">{{ locale === 'zh' ? state.nameZh : state.nameEn }} ({{ state.code }})</option>
+      </select>
+        <button
+          type="button"
+          @click="$emit('generate')"
+          :disabled="isGenerating"
+          class="w-auto inline-flex items-center justify-center gap-2 min-w-[156px] h-12 px-6 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <Sparkles class="w-5 h-5" :class="{ 'animate-spin': isGenerating }" />
+          <span>{{ isGenerating ? t('filter.generating') : (locale === 'zh' ? '生成新资料' : 'Generate') }}</span>
+        </button>
 
-    </details>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" :aria-label="t('addressMode.title')">
+      <button v-for="mode in modes" :key="mode.id" type="button" @click="updateMode(mode.id)" :aria-pressed="currentMode === mode.id" :title="t('addressMode.' + mode.desc)" class="mode-button" :data-color="mode.color" :class="{ active: currentMode === mode.id }"><component :is="mode.icon" class="w-4 h-4 shrink-0" /><span>{{ t('addressMode.' + mode.label) }}</span></button>
+    </div>
+
   </section>
+  </div>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -108,12 +110,13 @@ import type { FilterOptions, AddressMode, CountryCode } from '../types/identity'
 import { COUNTRIES } from '../data/countries';
 import { useI18n } from '../i18n';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   filters: FilterOptions;
   countryCode: CountryCode;
   selectedState: string;
   isGenerating?: boolean;
-}>();
+  showAddressControls?: boolean;
+}>(), { showAddressControls: true });
 
 const emit = defineEmits<{
   (e: 'update:filters', filters: FilterOptions): void;

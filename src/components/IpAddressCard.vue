@@ -186,12 +186,13 @@ import {
   Server
 } from 'lucide-vue-next';
 import type { IpConsensusResult } from '../types/ip';
-import type { GeneratedIdentity } from '../types/identity';
+import type { GeneratedIdentity, FilterOptions } from '../types/identity';
 import { detectClientIp, queryMultiSourceIp } from '../services/ipService';
 import { resolveAddressFromIp } from '../services/ipAddressResolver';
 import { generateIdentityFromAddress } from '../services/identityGenerator';
 import { useI18n } from '../i18n';
 
+const props = defineProps<{ filters?: Partial<FilterOptions> }>();
 const emit = defineEmits<{
   (e: 'identity-generated', identity: GeneratedIdentity, consensus: IpConsensusResult): void;
   (e: 'no-address'): void;
@@ -241,7 +242,7 @@ async function handleSearch() {
     const addressKindEn = resolvedAddress.addressMode === 'derivation' ? 'Interpolated street number' : 'Bundled address sample';
     res.strategySummaryZh = `匹配 ${resolvedAddress.city}, ${resolvedAddress.state} 的${addressKindZh}；可能并非 IP 同城，投递与 AVS 未核验`;
     res.strategySummaryEn = `${addressKindEn} in ${resolvedAddress.city}, ${resolvedAddress.state}; may differ from IP city. Delivery and AVS unverified.`;
-    emit('identity-generated', generateIdentityFromAddress(resolvedAddress), res);
+    emit('identity-generated', generateIdentityFromAddress(resolvedAddress, props.filters), res);
   } catch (error) {
     console.error('IP lookup failed', error);
     addressError.value = t('ipGen.lookupFailed');
