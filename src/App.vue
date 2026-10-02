@@ -16,7 +16,7 @@
     </Navbar>
 
     <!-- Main Container -->
-    <main class="flex-1 w-full mx-auto px-3 sm:px-6 py-3 space-y-5 sm:space-y-8 min-w-0">
+    <main class="flex-1 w-full mx-auto px-3 sm:px-6 py-2 space-y-5 sm:space-y-8 min-w-0">
       <!-- Address Radar Monitor View -->
       <AddressMonitorDashboard
         v-if="currentView === 'monitor'"
@@ -339,8 +339,7 @@ onUnmounted(() => {
 <style scoped>
 .generator-layout { @apply w-full max-w-[1100px] mx-auto space-y-4; }
 @media (min-width: 1280px) {
-  .generator-layout { @apply space-y-0; position: relative; width: min(1100px, calc(100% - 440px)); }
-  .region-sidebar { position: absolute; width: 200px; right: calc(100% + 20px); top: 0; }
+  .generator-layout { @apply space-y-0 grid grid-cols-[200px_minmax(0,1fr)] gap-5 max-w-[1320px] items-start; }
 }
 
 .region-nav { @apply px-3 py-2 text-sm font-medium whitespace-nowrap rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors; }

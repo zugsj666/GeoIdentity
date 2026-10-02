@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors duration-200">
-    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-5 sm:px-7 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900">
+    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900">
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ locale === 'zh' ? '生成结果' : 'Generated result' }}</h1>
       <div class="flex items-center gap-2">
         <div class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">
@@ -10,7 +10,7 @@
         <button type="button" @click="handleToggleFav" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700" :aria-label="isFav ? t('card.unfavorite') : t('card.favorite')"><Star class="w-4 h-4" :class="isFav ? 'fill-amber-400 text-amber-400' : 'text-slate-400'" /></button>
       </div>
     </div>
-    <section class="p-5 sm:p-7 space-y-4" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
+    <section class="p-5 sm:px-7 space-y-4" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button v-for="field in quickFields" :key="field.key" type="button" @click="copyField(field.value, field.key)" class="copy-row primary-row group" :class="{ 'sm:col-span-2': field.key === 'address' || field.key === 'email' }" :aria-label="(locale === 'zh' ? '复制' : 'Copy ') + field.label + ': ' + field.value">
           <span class="text-base text-slate-500 dark:text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ labels.emailNotice }}</span></span>

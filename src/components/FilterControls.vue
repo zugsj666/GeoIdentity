@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-3">
+  <div class="space-y-2">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <slot name="switcher" />
       <div v-if="showAddressControls" class="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
@@ -78,7 +78,7 @@
       </div>
       <slot name="actions" />
     </div>
-  <section v-if="showAddressControls" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+  <section v-if="showAddressControls" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-3">
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-2 text-base font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
       <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-12 !text-sm flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
@@ -129,9 +129,9 @@ const { locale, t } = useI18n();
 const currentCountry = computed(() => COUNTRIES.find(c => c.code === props.countryCode)!);
 const availableStates = computed(() => currentCountry.value.popularStates.filter(state => !props.filters.isTaxFreeOnly || state.isTaxFree));
 const modes = [
-  { id: 'landmark', icon: Building2, label: 'landmarkShort', desc: 'landmarkDesc', color: 'blue' },
   { id: 'derivation', icon: Route, label: 'derivationShort', desc: 'derivationDesc', color: 'emerald' },
   { id: 'residential', icon: Home, label: 'residentialShort', desc: 'residentialDesc', color: 'purple' },
+  { id: 'landmark', icon: Building2, label: 'landmarkShort', desc: 'landmarkDesc', color: 'blue' },
   { id: 'sourced', icon: MapPin, label: 'sourcedShort', desc: 'sourcedDesc', color: 'amber' }
 ] as const;
 
