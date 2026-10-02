@@ -344,4 +344,4 @@ export const COUNTRIES: CountryInfo[] = [
   }
 ];
 
-export const POPULAR_COUNTRY_CODES = ['US', 'HK', 'GB', 'JP'] as const;
+export const POPULAR_COUNTRY_CODES = ['US', 'HK', 'TW', 'GB', 'JP'] as const;

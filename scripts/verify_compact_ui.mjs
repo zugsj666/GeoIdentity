@@ -11,6 +11,7 @@ try {
   const { default: Controls } = await server.ssrLoadModule('/src/components/FilterControls.vue');
   const { default: Regions } = await server.ssrLoadModule('/src/components/RegionSelector.vue');
   const { generateIdentity, generateIdentityFromAddress } = await server.ssrLoadModule('/src/services/identityGenerator.ts');
+  const { presentIdentity } = await server.ssrLoadModule('/src/services/identityPresentation.ts');
   const { COUNTRIES, POPULAR_COUNTRY_CODES } = await server.ssrLoadModule('/src/data/countries.ts');
   const { useI18n } = await server.ssrLoadModule('/src/i18n/index.ts');
   for (const locale of ['zh', 'en']) {
@@ -23,10 +24,11 @@ try {
       assert.ok(fromAddress.basic.age >= 18 && fromAddress.basic.age <= 25);
       const html = await renderToString(createSSRApp(Card, { identity, isFav: true }));
       assert.equal((html.match(/class="[^"]*\bcopy-row\b/g) || []).length, 13);
-      assert.ok(html.includes(identity.basic.firstName));
-      assert.ok(html.includes(identity.basic.lastName));
-      assert.ok(html.includes(identity.address.city));
-      assert.ok(html.includes(identity.address.stateFull || identity.address.state));
+      const displayed = presentIdentity(identity, locale);
+      assert.ok(html.includes(displayed.basic.firstName));
+      assert.ok(html.includes(displayed.basic.lastName));
+      assert.ok(html.includes(displayed.address.city));
+      assert.ok(html.includes(displayed.address.stateFull || displayed.address.state));
       assert.ok(html.indexOf('copy-row') < html.indexOf('<iframe'));
       assert.ok(html.indexOf(identity.contact.email) < html.indexOf('<iframe'));
       assert.ok(html.indexOf('<iframe') < html.indexOf(`>${identity.contact.username}<`));

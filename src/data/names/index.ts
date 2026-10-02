@@ -1,4 +1,5 @@
-import type { CountryCode, Gender } from '../../types/identity';
+import { translatedText } from '../translatedText';
+import type { CountryCode, Gender, BasicInfo, CardLanguage } from '../../types/identity';
 
 interface NameData {
   maleFirstNames: string[];
@@ -413,4 +414,32 @@ export function getRandomName(countryCode: CountryCode, gender: Gender) {
     localFullName: fullName,
     zhFullName
   };
+}
+
+const NATIVE_NAME_WORDS: Partial<Record<CountryCode, Record<string, string>>> = {
+  TH: {
+    Somchai: 'สมชาย', Kittisak: 'กิตติศักดิ์', Arthit: 'อาทิตย์', Chaiwat: 'ชัยวัฒน์', Natthan: 'ณัฐธัน', Thanawat: 'ธนวัฒน์', Prasert: 'ประเสริฐ', Worawut: 'วรวุฒิ', Siriporn: 'ศิริพร', Kanya: 'กัญญา', Supaporn: 'สุภาพร', Nonglak: 'นงลักษณ์', Ploy: 'พลอย', Kannika: 'กรรณิการ์', Wanida: 'วนิดา', Chutima: 'ชุติมา', Saetang: 'แซ่ตั้ง', Suksawat: 'สุขสวัสดิ์', Rattanakul: 'รัตนกุล', Charoensuk: 'เจริญสุข', Wongsuwan: 'วงษ์สุวรรณ', Panyarachun: 'ปันยารชุน', Thanasuk: 'ธนสุข'
+  },
+  VN: {
+    'Duc Minh': 'Đức Minh', 'Tuan Anh': 'Tuấn Anh', 'Hoang Nam': 'Hoàng Nam', 'Quoc Bao': 'Quốc Bảo', 'Gia Huy': 'Gia Huy', 'Thanh Tung': 'Thanh Tùng', 'Huu Thang': 'Hữu Thắng', 'Thu Ha': 'Thu Hà', 'Mai Anh': 'Mai Anh', 'Ngoc Anh': 'Ngọc Anh', 'Thao My': 'Thảo My', 'Bao Ngoc': 'Bảo Ngọc', 'Khanh Linh': 'Khánh Linh', 'Phuong Thao': 'Phương Thảo', Nguyen: 'Nguyễn', Tran: 'Trần', Le: 'Lê', Pham: 'Phạm', Hoang: 'Hoàng', Phan: 'Phan', Vu: 'Vũ', Dang: 'Đặng', Bui: 'Bùi', Do: 'Đỗ', Ho: 'Hồ'
+  }
+};
+
+export function getNameParts(code: CountryCode, basic: BasicInfo, lang: CardLanguage) {
+  if (lang === 'en') return { firstName: basic.firstName, lastName: basic.lastName, fullName: basic.fullName };
+  const data = NAMES_BY_COUNTRY[code].localData;
+  const first = data?.[basic.gender === 'male' ? 'male' : 'female'].find(item => item.romaji === basic.firstName)?.kanji;
+  const last = data?.last.find(item => item.romaji === basic.lastName)?.kanji;
+  let firstName = first || (lang === 'zh' ? FIRST_NAME_ZH[basic.firstName] : NATIVE_NAME_WORDS[code]?.[basic.firstName]) || basic.firstName;
+  let lastName = last || (lang === 'zh' ? LAST_NAME_ZH[basic.lastName] : NATIVE_NAME_WORDS[code]?.[basic.lastName]) || basic.lastName;
+  if (lang === 'zh' && code === 'KR') {
+    firstName = KR_HANZI_MAP[firstName] || firstName;
+    lastName = KR_HANZI_MAP[lastName] || lastName;
+  }
+  const language = lang === 'zh' ? 'zh' : COUNTRY_LOCAL_META[code].langCode;
+  firstName = translatedText(firstName, language);
+  lastName = translatedText(lastName, language);
+  const surnameFirst = ['JP', 'KR', 'HK', 'TW', 'VN'].includes(code);
+  const separator = ['JP', 'KR', 'HK', 'TW'].includes(code) ? '' : ' ';
+  return { firstName, lastName, fullName: (surnameFirst ? [lastName, firstName] : [firstName, lastName]).join(separator) };
 }

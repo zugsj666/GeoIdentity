@@ -10,7 +10,7 @@
       @open-disclaimer="openDisclaimer('all')"
     >
       <template v-for="country in popularCountries" :key="country.code">
-        <button type="button" @click="selectPopularCountry(country.code)" class="region-nav" :class="{ active: currentView === 'generator' && selectedCountryCode === country.code && !(country.code === 'US' && filters.isTaxFreeOnly) }" :aria-pressed="currentView === 'generator' && selectedCountryCode === country.code && !(country.code === 'US' && filters.isTaxFreeOnly)">{{ locale === 'zh' ? country.nameZh.replace('中国', '') + '地址' : country.nameEn }}</button>
+        <button v-if="country.code !== 'US'" type="button" @click="selectPopularCountry(country.code)" class="region-nav" :class="{ active: currentView === 'generator' && selectedCountryCode === country.code }" :aria-pressed="currentView === 'generator' && selectedCountryCode === country.code">{{ locale === 'zh' ? country.nameZh.replace('中国', '') + '地址' : country.nameEn }}</button>
         <button v-if="country.code === 'US'" type="button" @click="selectPopularCountry('US', true)" class="region-nav" :class="{ active: currentView === 'generator' && selectedCountryCode === 'US' && filters.isTaxFreeOnly }" :aria-pressed="currentView === 'generator' && selectedCountryCode === 'US' && !!filters.isTaxFreeOnly">{{ locale === 'zh' ? '美国免税州' : 'US tax-free' }}</button>
       </template>
     </Navbar>
@@ -124,6 +124,7 @@ const savedMode = localStorage.getItem('geo_address_mode') as AddressMode | null
 const filters = ref<FilterOptions>({
   gender: 'random',
   ageRange: '18-25',
+  isTaxFreeOnly: true,
   addressMode: savedMode && ['sourced', 'landmark', 'derivation', 'residential'].includes(savedMode) ? savedMode : 'residential'
 });
 
@@ -322,7 +323,7 @@ onMounted(() => {
   handleHashChange();
 
   // Load first identity
-  if (historyList.value.length > 0 && historyList.value[0].address.addressMode === filters.value.addressMode && historyList.value[0].basic.age >= 18 && historyList.value[0].basic.age <= 25) {
+  if (historyList.value.length > 0 && historyList.value[0].countryCode === 'US' && historyList.value[0].address.isTaxFree && historyList.value[0].address.addressMode === filters.value.addressMode && historyList.value[0].basic.age >= 18 && historyList.value[0].basic.age <= 25) {
     currentIdentity.value = historyList.value[0];
     selectedCountryCode.value = currentIdentity.value.countryCode;
     selectedState.value = currentIdentity.value.address.state;
@@ -339,7 +340,7 @@ onUnmounted(() => {
 <style scoped>
 .generator-layout { @apply w-full max-w-[1100px] mx-auto space-y-4; }
 @media (min-width: 1280px) {
-  .generator-layout { @apply space-y-0 grid grid-cols-[200px_minmax(0,1fr)] gap-5 max-w-[1320px] items-start; }
+  .generator-layout { @apply space-y-0 grid grid-cols-[180px_minmax(0,1fr)_180px] gap-5 max-w-[1500px] items-start; }
 }
 
 .region-nav { @apply px-3 py-2 text-sm font-medium whitespace-nowrap rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors; }

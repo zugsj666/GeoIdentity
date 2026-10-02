@@ -101,7 +101,7 @@
               <span>{{ t('card.forwarderTitle') }}</span>
             </div>
             <div class="text-xs font-mono text-slate-600 dark:text-slate-400 line-clamp-1">
-              {{ displayFullName }} · {{ identity.address.addressLine1 || identity.address.street }}{{ identity.address.addressLine2 ? ` · ${identity.address.addressLine2}` : '' }} · {{ identity.address.city }}, {{ identity.address.state }} {{ identity.address.postcode }}
+              {{ displayFullName }} · {{ fullAddressString }}
             </div>
           </div>
           <button
@@ -144,12 +144,7 @@
               </h1>
 
               <!-- Phonetic, Latin or Native transcription if exists -->
-              <span
-                v-if="displaySubName"
-                class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400"
-              >
-                ({{ displaySubName }})
-              </span>
+
 
               <!-- Country Flag Tag -->
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -184,7 +179,7 @@
                 {{ identity.basic.age }} {{ labels.ageUnit }} ({{ identity.basic.birthDate }})
               </span>
               <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
-                {{ identity.basic.zodiacSign }}
+                {{ displayed.basic.zodiacSign }}
               </span>
               <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
                 {{ identity.basic.bloodType }}
@@ -327,7 +322,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           <!-- Company -->
           <div
-            @click="copyField(identity.occupation.company, 'company')"
+            @click="copyField(displayed.occupation.company, 'company')"
             class="group p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 cursor-pointer"
           >
             <div class="flex items-center justify-between text-xs text-slate-400 mb-0.5">
@@ -336,13 +331,13 @@
               <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400" />
             </div>
             <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              {{ identity.occupation.company }}
+              {{ displayed.occupation.company }}
             </div>
           </div>
 
           <!-- Title -->
           <div
-            @click="copyField(identity.occupation.title, 'title')"
+            @click="copyField(displayed.occupation.title, 'title')"
             class="group p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 cursor-pointer"
           >
             <div class="flex items-center justify-between text-xs text-slate-400 mb-0.5">
@@ -351,13 +346,13 @@
               <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400" />
             </div>
             <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              {{ identity.occupation.title }}
+              {{ displayed.occupation.title }}
             </div>
           </div>
 
           <!-- University -->
           <div
-            @click="copyField(identity.occupation.university, 'university')"
+            @click="copyField(displayed.occupation.university, 'university')"
             class="group p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 cursor-pointer"
           >
             <div class="flex items-center justify-between text-xs text-slate-400 mb-0.5">
@@ -366,7 +361,7 @@
               <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400" />
             </div>
             <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              {{ identity.occupation.university }}
+              {{ displayed.occupation.university }}
             </div>
           </div>
         </div>
@@ -452,7 +447,7 @@
 
           <!-- Issuing Bank Row (新起独立完整行，杜绝截断省略号) -->
           <div
-            @click="copyField(identity.finance.bankName, 'bank')"
+            @click="copyField(displayed.finance.bankName, 'bank')"
             class="group p-2.5 sm:p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors flex items-center justify-between gap-3"
           >
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
@@ -467,7 +462,7 @@
                   </span>
                 </div>
                 <div class="text-xs sm:text-sm font-semibold text-slate-100 break-words leading-tight">
-                  {{ identity.finance.bankName }}
+                  {{ displayed.finance.bankName }}
                 </div>
               </div>
             </div>
@@ -516,6 +511,8 @@ import { getCardLabels, formatForwarderShippingText } from '../data/cardLabels';
 import GoogleMapEmbed from './GoogleMapEmbed.vue';
 import { useI18n } from '../i18n';
 import { formatFullIdentityText } from '../services/exportService';
+import { presentIdentity, formatAddress } from '../services/identityPresentation';
+import { getQuickLabels } from '../data/quickLabels';
 
 const props = defineProps<{
   identity: GeneratedIdentity;
@@ -537,6 +534,8 @@ watch(locale, (newLoc) => {
   cardLang.value = newLoc === 'en' ? 'en' : 'zh';
 });
 
+const displayed = computed(() => presentIdentity(props.identity, cardLang.value));
+const quickLabels = computed(() => getQuickLabels(props.identity.countryCode, cardLang.value));
 const localMeta = computed(() => COUNTRY_LOCAL_META[props.identity.countryCode]);
 
 const labels = computed(() => {
@@ -554,66 +553,17 @@ const displayGenderBadge = computed(() => {
   return props.identity.basic.gender === 'male' ? 'M' : 'F';
 });
 
-const displayFullName = computed(() => {
-  const i = props.identity;
-  if (cardLang.value === 'zh') {
-    return i.basic.zhFullName || i.basic.localFullName || i.basic.fullName;
-  }
-  if (cardLang.value === 'local') {
-    return i.basic.localFullName || i.basic.fullName;
-  }
-  return i.basic.fullName;
-});
-
-const displaySubName = computed(() => {
-  const i = props.identity;
-  const main = displayFullName.value;
-  if (cardLang.value === 'zh') {
-    if (i.basic.zhFullName && i.basic.fullName !== main) {
-      return i.basic.fullName;
-    }
-    return i.basic.phoneticName || (i.basic.fullName !== main ? i.basic.fullName : '');
-  }
-  if (cardLang.value === 'en') {
-    if (i.basic.localFullName && i.basic.localFullName !== i.basic.fullName) {
-      return i.basic.localFullName;
-    }
-    return '';
-  }
-  // cardLang === 'local'
-  if (i.countryCode === 'JP') {
-    return i.basic.phoneticName || (i.basic.fullName !== main ? i.basic.fullName : '');
-  }
-  if (i.countryCode === 'KR') {
-    return i.basic.fullName;
-  }
-  if (i.countryCode === 'HK' || i.countryCode === 'TW') {
-    return i.basic.fullName;
-  }
-  if (i.basic.fullName !== main) {
-    return i.basic.fullName;
-  }
-  return '';
-});
-
-const displayCountryName = computed(() => {
-  if (cardLang.value === 'zh') {
-    return props.identity.countryName;
-  }
-  if (cardLang.value === 'local') {
-    return localMeta.value?.countryLocalName || props.identity.address.country;
-  }
-  return props.identity.address.country;
-});
+const displayFullName = computed(() => displayed.value.basic.fullName);
+const displayCountryName = computed(() => displayed.value.address.country);
 
 const displayDocTypeName = computed(() => {
   if (cardLang.value === 'zh') {
     return props.identity.document.typeNameZh;
   }
   if (cardLang.value === 'local') {
-    return props.identity.document.typeNameLocal || props.identity.document.typeName;
+    return props.identity.document.typeNameLocal || displayed.value.document.typeName;
   }
-  return props.identity.document.typeName;
+  return displayed.value.document.typeName;
 });
 
 const mapSection = ref<HTMLElement | null>(null);
@@ -621,26 +571,25 @@ function scrollToMap() {
   mapSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 const quickFields = computed(() => {
-  const i = props.identity;
-  const zh = cardLang.value === 'zh';
+  const i = displayed.value;
   return [
-    { key: 'firstName', label: zh ? '名 / First Name' : 'First Name', value: i.basic.firstName },
-    { key: 'lastName', label: zh ? '姓 / Last Name' : 'Last Name', value: i.basic.lastName },
-    { key: 'gender', label: zh ? '性别 / Gender' : 'Gender', value: i.basic.gender === 'male' ? labels.value.genderMale : labels.value.genderFemale },
+    { key: 'firstName', label: quickLabels.value.firstName, value: i.basic.firstName },
+    { key: 'lastName', label: quickLabels.value.lastName, value: i.basic.lastName },
+    { key: 'gender', label: quickLabels.value.gender, value: i.basic.gender === 'male' ? labels.value.genderMale : labels.value.genderFemale },
     { key: 'phone', label: labels.value.phone, value: i.contact.phoneFormatted },
     { key: 'email', label: labels.value.email, value: i.contact.email },
     { key: 'street', label: labels.value.street, value: i.address.addressLine1 || i.address.street },
-    { key: 'city', label: zh ? '城市 / City' : 'City', value: i.address.city },
-    { key: 'state', label: zh ? '州 / State' : 'State / Province', value: i.address.stateFull || i.address.state },
+    { key: 'city', label: quickLabels.value.city, value: i.address.city },
+    { key: 'state', label: quickLabels.value.state, value: i.address.stateFull || i.address.state },
     { key: 'postcode', label: labels.value.postcode, value: i.address.postcode },
-    { key: 'address', label: zh ? '完整地址' : 'Full Address', value: fullAddressString.value }
+    { key: 'address', label: quickLabels.value.address, value: fullAddressString.value }
   ];
 });
 
 const extraFields = computed(() => [
-  { key: 'birthDate', label: cardLang.value === 'zh' ? '生日' : 'Birthday', value: props.identity.basic.birthDate },
-  { key: 'suite', label: labels.value.addressLine2, value: props.identity.address.addressLine2 || '' },
-  { key: 'country', label: cardLang.value === 'zh' ? '国家' : 'Country', value: displayCountryName.value }
+  { key: 'birthDate', label: quickLabels.value.birthDate, value: props.identity.basic.birthDate },
+  { key: 'suite', label: labels.value.addressLine2, value: displayed.value.address.addressLine2 || '' },
+  { key: 'country', label: quickLabels.value.country, value: displayCountryName.value }
 ]);
 
 const copiedKey = ref<string | null>(null);
@@ -662,27 +611,7 @@ const modeBadgeText = computed(() => {
   return t('addressMode.landmarkBadge');
 });
 
-const displayTaxRate = computed(() => {
-  const raw = props.identity.address.taxRate;
-  const isTaxFree = props.identity.address.isTaxFree;
-  if (locale.value === 'zh') {
-    if (isTaxFree || (raw && raw.includes('No Sales Tax'))) {
-      return '0.00% (免消费税)';
-    }
-    if (raw && raw.includes('Standard Tax')) {
-      return '标准消费税率';
-    }
-    return raw || '0.00% (免消费税)';
-  } else {
-    if (isTaxFree || (raw && raw.includes('免税'))) {
-      return '0.00% (No Sales Tax)';
-    }
-    if (raw && raw.includes('标准')) {
-      return 'Standard Tax';
-    }
-    return raw || '0.00% (No Sales Tax)';
-  }
-});
+const displayTaxRate = computed(() => displayed.value.address.taxRate || '—');
 
 const localizedAvsTier = computed(() => {
   const mode = props.identity.address.addressMode;
@@ -728,18 +657,12 @@ const countryFlag = computed(() => {
   return c ? c.flag : '🌐';
 });
 
-const fullAddressString = computed(() => {
-  const a = props.identity.address;
-  const line2 = a.addressLine2 ? ` ${a.addressLine2},` : '';
-  return `${a.addressLine1 || a.street},${line2} ${a.city}, ${a.stateFull || a.state} ${a.postcode}, ${a.country}`;
-});
+const fullAddressString = computed(() => formatAddress(displayed.value.address));
 
 const forwarderShippingText = computed(() => {
   return formatForwarderShippingText(
     props.identity,
-    cardLang.value,
-    displayFullName.value,
-    displayCountryName.value
+    cardLang.value
   );
 });
 

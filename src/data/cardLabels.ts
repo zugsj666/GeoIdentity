@@ -1,4 +1,8 @@
 import type { CountryCode, CardLanguage, GeneratedIdentity } from '../types/identity';
+import { COUNTRY_LOCAL_META } from './names';
+import { translatedText } from './translatedText';
+import { getQuickLabels } from './quickLabels';
+import { presentIdentity } from '../services/identityPresentation';
 
 export interface CardLabels {
   // Address section
@@ -47,8 +51,8 @@ export interface CardLabels {
 export const CARD_LABELS_ZH: CardLabels = {
   addressTitle: '实体物理地址 (真实可达)',
   taxFreeTag: '免消费税',
-  street: '街道地址 (Line 1)',
-  addressLine2: '门牌 / 单元 (Line 2)',
+  street: '街道地址',
+  addressLine2: '门牌 / 单元',
   cityState: '城市与省州',
   postcode: '邮政编码',
   forwarderTitle: '标准收件/转运格式 (点击一键复制)',
@@ -435,7 +439,7 @@ export const CARD_LABELS_BY_COUNTRY: Partial<Record<CountryCode, CardLabels>> = 
   HK: {
     addressTitle: '實體物理地址 (真實地標定位)',
     taxFreeTag: '免消費稅',
-    street: '街道地址 (Line 1)',
+    street: '街道地址',
     addressLine2: '單位 / 樓層 (Line 2)',
     cityState: '區域與地區',
     postcode: '郵遞區號',
@@ -473,7 +477,7 @@ export const CARD_LABELS_BY_COUNTRY: Partial<Record<CountryCode, CardLabels>> = 
   TW: {
     addressTitle: '實體物理地址 (真實地標定位)',
     taxFreeTag: '免消費稅',
-    street: '街道地址 (Line 1)',
+    street: '街道地址',
     addressLine2: '門牌 / 樓層 (Line 2)',
     cityState: '縣市與行政區',
     postcode: '郵遞區號 (3+2 / 3+3)',
@@ -548,7 +552,7 @@ export const CARD_LABELS_BY_COUNTRY: Partial<Record<CountryCode, CardLabels>> = 
   }
 };
 
-export function getCardLabels(countryCode: CountryCode, cardLang: CardLanguage, uiLocale: string): CardLabels {
+export function getCardLabels(countryCode: CountryCode, cardLang: CardLanguage, _uiLocale: string): CardLabels {
   if (cardLang === 'zh') {
     return CARD_LABELS_ZH;
   }
@@ -560,115 +564,21 @@ export function getCardLabels(countryCode: CountryCode, cardLang: CardLanguage, 
   if (local) {
     return local;
   }
-  return uiLocale === 'zh' ? CARD_LABELS_ZH : CARD_LABELS_EN;
+  return Object.fromEntries(Object.entries(CARD_LABELS_EN).map(([key, value]) => [key, translatedText(value, COUNTRY_LOCAL_META[countryCode].langCode)])) as unknown as CardLabels;
 }
 
 export function formatForwarderShippingText(
   identity: GeneratedIdentity,
-  cardLang: CardLanguage,
-  displayFullName: string,
-  displayCountryName: string
+  cardLang: CardLanguage
 ): string {
-  const cCode = identity.countryCode;
+  identity = presentIdentity(identity, cardLang);
   const a = identity.address;
-  const i = identity;
-
-  if (cardLang === 'zh') {
-    return `收件人: ${displayFullName}
-街道地址 (Line 1): ${a.addressLine1 || a.street}
-门牌/单元 (Line 2): ${a.addressLine2 || 'N/A'}
-城市: ${a.city}
-省/州: ${a.stateFull || a.state}
-邮政编码: ${a.postcode}
-国家/地区: ${displayCountryName}
-联系电话: ${i.contact.phoneFormatted}`;
-  }
-
-  if (cardLang === 'local') {
-    if (cCode === 'IT') {
-      return `Destinatario: ${displayFullName}
-Indirizzo (Via / Corso): ${a.addressLine1 || a.street}
-Interno / Scala: ${a.addressLine2 || 'N/A'}
-Città: ${a.city}
-Provincia: ${a.stateFull || a.state}
-CAP: ${a.postcode}
-Paese: Italia (IT)
-Telefono: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'ES') {
-      return `Destinatario: ${displayFullName}
-Dirección (Línea 1): ${a.addressLine1 || a.street}
-Piso / Puerta (Línea 2): ${a.addressLine2 || 'N/A'}
-Ciudad: ${a.city}
-Provincia: ${a.stateFull || a.state}
-Código Postal: ${a.postcode}
-País: España (ES)
-Teléfono: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'DE' || cCode === 'CH') {
-      return `Empfänger: ${displayFullName}
-Straße & Hausnummer: ${a.addressLine1 || a.street}
-Zusatz / Etage: ${a.addressLine2 || 'N/A'}
-Ort: ${a.city}
-Bundesland / Kanton: ${a.stateFull || a.state}
-Postleitzahl: ${a.postcode}
-Land: ${cCode === 'DE' ? 'Deutschland' : 'Schweiz'} (${cCode})
-Telefonnummer: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'FR' || cCode === 'LU') {
-      return `Destinataire: ${displayFullName}
-Adresse (Ligne 1): ${a.addressLine1 || a.street}
-Complément (Ligne 2): ${a.addressLine2 || 'N/A'}
-Ville: ${a.city}
-Région / Département: ${a.stateFull || a.state}
-Code Postal: ${a.postcode}
-Pays: ${cCode === 'FR' ? 'France' : 'Luxembourg'} (${cCode})
-Téléphone: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'JP') {
-      return `受取人氏名: ${displayFullName}
-住所 (Line 1): ${a.addressLine1 || a.street}
-建物名・部屋番号 (Line 2): ${a.addressLine2 || ''}
-市区町村: ${a.city}
-都道府県: ${a.stateFull || a.state}
-郵便番号: 〒${a.postcode}
-国名: 日本 (JP)
-電話番号: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'KR') {
-      return `수령인: ${displayFullName}
-도로명 주소 (Line 1): ${a.addressLine1 || a.street}
-상세 주소 (Line 2): ${a.addressLine2 || ''}
-시·군·구: ${a.city}
-시·도: ${a.stateFull || a.state}
-우편번호: ${a.postcode}
-국가: 대한민국 (KR)
-전화번호: ${i.contact.phoneFormatted}`;
-    }
-
-    if (cCode === 'HK' || cCode === 'TW') {
-      return `收件人: ${displayFullName}
-街道地址 (Line 1): ${a.addressLine1 || a.street}
-單位/樓層 (Line 2): ${a.addressLine2 || 'N/A'}
-縣市/區域: ${a.stateFull || a.state} ${a.city}
-郵遞區號: ${a.postcode}
-國家/地區: ${cCode === 'HK' ? '香港特別行政區' : '台灣'}
-聯絡電話: ${i.contact.phoneFormatted}`;
-    }
-  }
-
-  // English fallback
-  return `Recipient: ${displayFullName}
-Address Line 1: ${a.addressLine1 || a.street}
-Address Line 2: ${a.addressLine2 || 'N/A'}
-City: ${a.city}
-State/Province: ${a.stateFull || a.state}
-ZIP/Postal Code: ${a.postcode}
-Country: ${displayCountryName}
-Phone Number: ${i.contact.phoneFormatted}`;
+  const labels = getCardLabels(identity.countryCode, cardLang, '');
+  const quick = getQuickLabels(identity.countryCode, cardLang);
+  return [
+    [quick.firstName, identity.basic.firstName], [quick.lastName, identity.basic.lastName],
+    [labels.street, a.addressLine1 || a.street], [labels.addressLine2, a.addressLine2],
+    [quick.city, a.city], [quick.state, a.stateFull || a.state],
+    [labels.postcode, a.postcode], [quick.country, a.country], [labels.phone, identity.contact.phoneFormatted]
+  ].filter(([, value]) => value).map(([label, value]) => `${label}: ${value}`).join('\n');
 }

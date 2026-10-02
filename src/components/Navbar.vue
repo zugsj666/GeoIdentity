@@ -1,12 +1,12 @@
 <template>
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800" style="padding-top: env(safe-area-inset-top, 0px)">
-    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-2.5 shrink-0" aria-label="GeoIdentity">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 h-14 flex lg:grid lg:grid-cols-[1fr_auto_1fr] items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2.5 shrink-0 justify-self-start" aria-label="GeoIdentity">
         <span class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-primary-500/20"><MapPin class="w-5 h-5" /></span>
         <span class="font-bold tracking-tight bg-gradient-to-r from-slate-900 via-primary-800 to-primary-600 dark:from-white dark:to-primary-400 bg-clip-text text-transparent">GeoIdentity</span>
       </a>
       <nav class="hidden lg:flex items-center gap-1" :aria-label="locale === 'zh' ? '常用地区' : 'Popular regions'"><slot /></nav>
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 justify-self-end">
         <button type="button" @click="$emit('open-history')" class="nav-action" :aria-label="t('nav.history')" :title="t('nav.history')"><Bookmark class="w-4 h-4" /><span class="hidden sm:inline">{{ locale === 'zh' ? '历史 / 收藏' : 'Saved' }}</span><span v-if="favoriteCount" class="text-primary-600 dark:text-primary-400">{{ favoriteCount }}</span></button>
         <button type="button" @click="toggleLang" class="nav-action" :aria-label="locale === 'zh' ? 'Switch to English' : '切换中文'"><Languages class="w-4 h-4" /><span class="hidden sm:inline">{{ locale === 'zh' ? 'EN' : '中' }}</span></button>
         <button type="button" @click="toggleTheme" class="nav-action" :aria-label="isDark ? t('nav.themeLight') : t('nav.themeDark')"><Sun v-if="isDark" class="w-4 h-4 text-amber-400" /><Moon v-else class="w-4 h-4" /></button>
