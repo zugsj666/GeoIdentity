@@ -13,7 +13,7 @@
     <section class="p-5 sm:px-7 space-y-4" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button v-for="field in quickFields" :key="field.key" type="button" @click="copyField(field.value, field.key)" class="copy-row primary-row group" :class="{ 'sm:col-span-2': field.key === 'address' || field.key === 'email' }" :aria-label="(locale === 'zh' ? '复制' : 'Copy ') + field.label + ': ' + field.value">
-          <span class="text-base text-slate-500 dark:text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ labels.emailNotice }}</span></span>
+          <span class="text-base text-slate-500 dark:text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ locale === 'zh' ? '测试占位邮箱' : 'Placeholder Mail' }}</span></span>
           <span class="min-w-0 flex-1 text-right text-xl font-semibold text-slate-800 dark:text-slate-100 break-words">{{ field.value || '—' }}</span>
           <Check v-if="copiedKey === field.key" class="w-3.5 h-3.5 text-emerald-500 shrink-0" /><Copy v-else class="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-500 shrink-0" />
         </button>
@@ -512,7 +512,6 @@ import GoogleMapEmbed from './GoogleMapEmbed.vue';
 import { useI18n } from '../i18n';
 import { formatFullIdentityText } from '../services/exportService';
 import { presentIdentity, formatAddress } from '../services/identityPresentation';
-import { getQuickLabels } from '../data/quickLabels';
 
 const props = defineProps<{
   identity: GeneratedIdentity;
@@ -528,14 +527,14 @@ const emit = defineEmits<{
 const { locale, t } = useI18n();
 
 // 3-segment card profile display language ('zh' | 'en' | 'local')
-const cardLang = ref<CardLanguage>(locale.value === 'en' ? 'en' : 'zh');
+const defaultCardLanguage = () => ['HK', 'TW'].includes(props.identity.countryCode) ? 'local' : 'en';
+const cardLang = ref<CardLanguage>(defaultCardLanguage());
 
-watch(locale, (newLoc) => {
-  cardLang.value = newLoc === 'en' ? 'en' : 'zh';
+watch(() => props.identity.countryCode, () => {
+  cardLang.value = defaultCardLanguage();
 });
 
 const displayed = computed(() => presentIdentity(props.identity, cardLang.value));
-const quickLabels = computed(() => getQuickLabels(props.identity.countryCode, cardLang.value));
 const localMeta = computed(() => COUNTRY_LOCAL_META[props.identity.countryCode]);
 
 const labels = computed(() => {
@@ -573,23 +572,23 @@ function scrollToMap() {
 const quickFields = computed(() => {
   const i = displayed.value;
   return [
-    { key: 'firstName', label: quickLabels.value.firstName, value: i.basic.firstName },
-    { key: 'lastName', label: quickLabels.value.lastName, value: i.basic.lastName },
-    { key: 'gender', label: quickLabels.value.gender, value: i.basic.gender === 'male' ? labels.value.genderMale : labels.value.genderFemale },
-    { key: 'phone', label: labels.value.phone, value: i.contact.phoneFormatted },
-    { key: 'email', label: labels.value.email, value: i.contact.email },
-    { key: 'street', label: labels.value.street, value: i.address.addressLine1 || i.address.street },
-    { key: 'city', label: quickLabels.value.city, value: i.address.city },
-    { key: 'state', label: quickLabels.value.state, value: i.address.stateFull || i.address.state },
-    { key: 'postcode', label: labels.value.postcode, value: i.address.postcode },
-    { key: 'address', label: quickLabels.value.address, value: fullAddressString.value }
+    { key: 'firstName', label: '名 / First Name', value: i.basic.firstName },
+    { key: 'lastName', label: '姓 / Last Name', value: i.basic.lastName },
+    { key: 'gender', label: '性别 / Gender', value: i.basic.gender === 'male' ? labels.value.genderMale : labels.value.genderFemale },
+    { key: 'phone', label: '电话 / Phone', value: i.contact.phoneFormatted },
+    { key: 'email', label: '电子邮件 / Email', value: i.contact.email },
+    { key: 'street', label: '街道地址 / Street Address', value: i.address.addressLine1 || i.address.street },
+    { key: 'city', label: '城市 / City', value: i.address.city },
+    { key: 'state', label: '州 / State', value: i.address.stateFull || i.address.state },
+    { key: 'postcode', label: '邮编 / ZIP Code', value: i.address.postcode },
+    { key: 'address', label: '完整地址 / Full Address', value: fullAddressString.value }
   ];
 });
 
 const extraFields = computed(() => [
-  { key: 'birthDate', label: quickLabels.value.birthDate, value: props.identity.basic.birthDate },
-  { key: 'suite', label: labels.value.addressLine2, value: displayed.value.address.addressLine2 || '' },
-  { key: 'country', label: quickLabels.value.country, value: displayCountryName.value }
+  { key: 'birthDate', label: '生日 / Birthday', value: props.identity.basic.birthDate },
+  { key: 'suite', label: '门牌 / Unit', value: displayed.value.address.addressLine2 || '' },
+  { key: 'country', label: '国家 / Country', value: displayCountryName.value }
 ]);
 
 const copiedKey = ref<string | null>(null);

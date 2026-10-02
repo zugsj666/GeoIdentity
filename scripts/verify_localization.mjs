@@ -31,6 +31,7 @@ try {
         const value = shown.address[key] || '';
         assert.ok(value, `${label}: ${key} is empty`);
         if (lang === 'en') assert.ok(!nonLatin.test(value), `${label}: ${value}`);
+        if (lang === 'local' && ['HK', 'TW'].includes(address.countryCode)) assert.ok(!/[区号湾]/.test(value), `${label}: simplified Chinese in traditional mode`);
         if (lang === 'zh') assert.ok(!/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u.test(value), `${label}: ${value}`);
         if (lang === 'zh' || (lang === 'local' && ['JP', 'KR', 'HK', 'TW', 'TH'].includes(address.countryCode))) {
           assert.ok(!/[A-Za-z]{3}/.test(value), `${label}: untranslated ${value}`);
@@ -69,6 +70,7 @@ try {
       }
     }
   }
+  assert.equal(getNameParts('HK', { gender: 'female', firstName: 'Tsz-ching', lastName: 'Chan', fullName: 'Tsz-ching Chan' }, 'local').fullName, '陳芷晴');
   assert.equal(selectLanguageText('中西区 (Central and Western)', 'en'), 'Central and Western');
   assert.equal(selectLanguageText('HSBC Hong Kong (匯豐銀行)', 'en'), 'HSBC Hong Kong');
   assert.equal(selectLanguageText('MIT (US)', 'en'), 'MIT (US)');

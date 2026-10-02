@@ -24,7 +24,8 @@ try {
       assert.ok(fromAddress.basic.age >= 18 && fromAddress.basic.age <= 25);
       const html = await renderToString(createSSRApp(Card, { identity, isFav: true }));
       assert.equal((html.match(/class="[^"]*\bcopy-row\b/g) || []).length, 13);
-      const displayed = presentIdentity(identity, locale);
+      for (const label of ['名 / First Name', '姓 / Last Name', '性别 / Gender', '电话 / Phone', '电子邮件 / Email', '街道地址 / Street Address', '城市 / City', '州 / State', '邮编 / ZIP Code', '完整地址 / Full Address']) assert.ok(html.includes(label), `Stable bilingual label: ${label}`);
+      const displayed = presentIdentity(identity, 'en');
       assert.ok(html.includes(displayed.basic.firstName));
       assert.ok(html.includes(displayed.basic.lastName));
       assert.ok(html.includes(displayed.address.city));
@@ -39,6 +40,14 @@ try {
       assert.ok(controls.indexOf('id="generator-age"') < controls.indexOf('disabled:opacity-70'));
       assert.ok(!controls.includes('<details'));
     }
+  }
+  for (const country of COUNTRIES) {
+    const identity = generateIdentity(country.code, { addressMode: 'derivation', ageRange: '18-25' });
+    const html = await renderToString(createSSRApp(Card, { identity }));
+    const lang = ['HK', 'TW'].includes(country.code) ? 'local' : 'en';
+    const selectedLabel = lang === 'local' ? '繁體中文' : 'EN';
+    assert.ok(new RegExp(`<button[^>]*aria-pressed="true"[^>]*>${selectedLabel}</button>`).test(html), `${country.code}: default ${lang}`);
+    assert.ok(html.includes(presentIdentity(identity, lang).basic.firstName));
   }
   const regions = await renderToString(createSSRApp(Regions, { selectedCountryCode: 'CA' }));
   const taxFree = await renderToString(createSSRApp(Controls, { filters: { gender: 'random', ageRange: 'random', isTaxFreeOnly: true }, countryCode: 'US', selectedState: '' }));
