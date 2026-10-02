@@ -1,8 +1,8 @@
 <template>
-  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3 sm:p-4 shadow-sm space-y-2">
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-2 text-sm font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
-      <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-9 flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
+      <div class="flex items-center gap-2 text-base font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
+      <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-12 !text-sm flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
         <option value="">{{ t('regions.selectState') }}</option>
         <option v-for="state in availableStates" :key="state.code" :value="state.code">{{ locale === 'zh' ? state.nameZh : state.nameEn }} ({{ state.code }})</option>
       </select>
@@ -10,10 +10,10 @@
           type="button"
           @click="$emit('generate')"
           :disabled="isGenerating"
-          class="w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+          class="w-auto inline-flex items-center justify-center gap-2 min-w-[156px] h-12 px-6 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
         >
-          <Sparkles class="w-4 h-4" :class="{ 'animate-spin': isGenerating }" />
-          <span>{{ isGenerating ? t('filter.generating') : (locale === 'zh' ? '生成' : 'Generate') }}</span>
+          <Sparkles class="w-5 h-5" :class="{ 'animate-spin': isGenerating }" />
+          <span>{{ isGenerating ? t('filter.generating') : (locale === 'zh' ? '生成新资料' : 'Generate') }}</span>
         </button>
 
     </div>
@@ -21,7 +21,7 @@
       <button v-for="mode in modes" :key="mode.id" type="button" @click="updateMode(mode.id)" :aria-pressed="currentMode === mode.id" :title="t('addressMode.' + mode.desc)" class="mode-button" :data-color="mode.color" :class="{ active: currentMode === mode.id }"><component :is="mode.icon" class="w-4 h-4 shrink-0" /><span>{{ t('addressMode.' + mode.label) }}</span></button>
     </div>
     <!-- Bottom Secondary Filters & Generate Button Bar -->
-<details class="text-xs text-slate-500 dark:text-slate-400">
+<details class="text-sm text-slate-500 dark:text-slate-400">
       <summary class="cursor-pointer w-fit py-1 font-medium">{{ locale === 'zh' ? '更多筛选' : 'More filters' }}</summary>
       <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto mt-3">
         <!-- Gender Filter -->
@@ -30,7 +30,7 @@
             type="button"
             @click="updateGender('random')"
             :class="[
-              'px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer',
+              'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'random'
                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-semibold'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -42,7 +42,7 @@
             type="button"
             @click="updateGender('male')"
             :class="[
-              'px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer',
+              'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'male'
                 ? 'bg-blue-500 text-white shadow-xs font-semibold'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -54,7 +54,7 @@
             type="button"
             @click="updateGender('female')"
             :class="[
-              'px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer',
+              'px-2.5 sm:px-3 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer',
               filters.gender === 'female'
                 ? 'bg-rose-500 text-white shadow-xs font-semibold'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -66,13 +66,13 @@
 
         <!-- Age Range Filter -->
         <div class="flex items-center gap-1.5">
-          <label class="text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0">
+          <label class="text-sm font-medium text-slate-500 dark:text-slate-400 shrink-0">
             {{ t('filter.age') }}:
           </label>
           <select
             :value="filters.ageRange"
             @change="updateAge(($event.target as HTMLSelectElement).value as any)"
-            class="text-base sm:text-xs font-medium bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer"
+            class="text-base sm:text-sm font-medium bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer"
           >
             <option value="random">{{ t('filter.ageAll') }}</option>
             <option value="18-25">{{ t('filter.ageYouth') }}</option>
@@ -87,7 +87,7 @@
           type="button"
           @click="toggleTaxFreeOnly"
           :class="[
-            'px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer',
+            'px-2.5 sm:px-3 py-1.5 text-sm font-semibold rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer',
             filters.isTaxFreeOnly
               ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-amber-600'
@@ -156,7 +156,7 @@ function toggleTaxFreeOnly() {
 </script>
 
 <style scoped>
-.mode-button { @apply inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 transition-colors; }
+.mode-button { @apply inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 transition-colors; }
 .mode-button[data-color="blue"].active { @apply border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300; }
 .mode-button[data-color="emerald"].active { @apply border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300; }
 .mode-button[data-color="purple"].active { @apply border-purple-500 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300; }

@@ -1,27 +1,26 @@
 <template>
   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors duration-200">
-    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900">
-      <h1 class="text-sm font-bold text-slate-900 dark:text-white">{{ locale === 'zh' ? '生成结果' : 'Generated result' }}</h1>
+    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900">
+      <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ locale === 'zh' ? '生成结果' : 'Generated result' }}</h1>
       <div class="flex items-center gap-2">
-        <div class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[11px] font-medium">
+        <div class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">
           <button v-for="language in (['zh', 'en', 'local'] as const)" :key="language" type="button" @click="cardLang = language" class="px-2 py-1 rounded-md" :class="cardLang === language ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'" :aria-pressed="cardLang === language">{{ language === 'zh' ? '中文' : language === 'en' ? 'EN' : localLangButtonText }}</button>
         </div>
-        <button type="button" @click="handleCopyAll" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900"><Check v-if="copiedAll" class="w-3.5 h-3.5 text-emerald-400" /><Copy v-else class="w-3.5 h-3.5" />{{ locale === 'zh' ? '复制全部' : 'Copy all' }}</button>
+        <button type="button" @click="handleCopyAll" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900"><Check v-if="copiedAll" class="w-3.5 h-3.5 text-emerald-400" /><Copy v-else class="w-3.5 h-3.5" />{{ locale === 'zh' ? '复制全部' : 'Copy all' }}</button>
         <button type="button" @click="handleToggleFav" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700" :aria-label="isFav ? t('card.unfavorite') : t('card.favorite')"><Star class="w-4 h-4" :class="isFav ? 'fill-amber-400 text-amber-400' : 'text-slate-400'" /></button>
       </div>
     </div>
-    <section class="p-3 sm:p-4 space-y-3" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
-      <div class="flex items-center justify-between text-xs text-slate-400"><span>{{ locale === 'zh' ? '点击即复制' : 'Click to copy' }}</span><span class="flex items-center gap-1"><Copy class="w-3 h-3" />{{ locale === 'zh' ? '点击任意一行复制' : 'Click any row to copy' }}</span></div>
+    <section class="p-4 sm:p-5 space-y-3" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <button v-for="field in quickFields" :key="field.key" type="button" @click="copyField(field.value, field.key)" class="copy-row group" :class="{ 'sm:col-span-2': field.key === 'address' || field.key === 'email' }" :aria-label="(locale === 'zh' ? '复制' : 'Copy ') + field.label + ': ' + field.value">
-          <span class="text-xs text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ labels.emailNotice }}</span></span>
-          <span class="min-w-0 flex-1 text-right text-sm font-semibold text-slate-800 dark:text-slate-100 break-words">{{ field.value || '—' }}</span>
+          <span class="text-sm text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ labels.emailNotice }}</span></span>
+          <span class="min-w-0 flex-1 text-right text-base font-semibold text-slate-800 dark:text-slate-100 break-words">{{ field.value || '—' }}</span>
           <Check v-if="copiedKey === field.key" class="w-3.5 h-3.5 text-emerald-500 shrink-0" /><Copy v-else class="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-500 shrink-0" />
         </button>
       </div>
       <div class="flex items-center justify-between gap-3">
-        <span class="text-[11px] text-slate-400">{{ t('card.syntheticBadge') }} · {{ locale === 'zh' ? '投递与 AVS 未核验' : 'Delivery & AVS unverified' }}</span>
-        <button type="button" @click="scrollToMap" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-teal-500 text-white text-xs font-semibold shrink-0"><MapPin class="w-3.5 h-3.5" />{{ locale === 'zh' ? '查看地图' : 'View map' }} ↓</button>
+        <span class="text-xs text-slate-400">{{ t('card.syntheticBadge') }} · {{ locale === 'zh' ? '投递与 AVS 未核验' : 'Delivery & AVS unverified' }}</span>
+        <button type="button" @click="scrollToMap" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-teal-500 text-white text-sm font-semibold shrink-0"><MapPin class="w-3.5 h-3.5" />{{ locale === 'zh' ? '查看地图' : 'View map' }} ↓</button>
       </div>
     </section>
     <div class="p-4 sm:p-5 space-y-6 border-t border-slate-200 dark:border-slate-800">
@@ -808,6 +807,6 @@ function handleToggleFav() {
 </script>
 
 <style scoped>
-.copy-row { @apply flex items-center gap-3 w-full min-w-0 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500; }
-@media (max-width: 639px) { .copy-row { @apply flex-wrap gap-2; } .copy-row > span:nth-child(2) { @apply text-xs; } }
+.copy-row { @apply flex items-center gap-3 w-full min-w-0 min-h-[50px] px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500; }
+  @media (max-width: 639px) { .copy-row { @apply flex-wrap gap-2; } .copy-row > span:nth-child(2) { @apply text-sm; } }
 </style>
