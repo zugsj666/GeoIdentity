@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col selection:bg-primary-500 selection:text-white overflow-x-hidden w-full max-w-full">
+  <div class="min-h-screen flex flex-col selection:bg-primary-500 selection:text-white overflow-x-clip w-full max-w-full">
     <!-- Navbar -->
     <Navbar
       :favorite-count="favoritesList.length"
@@ -8,10 +8,15 @@
       @open-batch="isBatchModalOpen = true"
       @open-history="isHistoryDrawerOpen = true"
       @open-disclaimer="openDisclaimer('all')"
-    />
+    >
+      <template v-for="country in popularCountries" :key="country.code">
+        <button type="button" @click="selectPopularCountry(country.code)" class="region-nav" :class="{ active: currentView === 'generator' && selectedCountryCode === country.code && !(country.code === 'US' && filters.isTaxFreeOnly) }" :aria-pressed="currentView === 'generator' && selectedCountryCode === country.code && !(country.code === 'US' && filters.isTaxFreeOnly)">{{ locale === 'zh' ? country.nameZh.replace('中国', '') + '地址' : country.nameEn }}</button>
+        <button v-if="country.code === 'US'" type="button" @click="selectPopularCountry('US', true)" class="region-nav" :class="{ active: currentView === 'generator' && selectedCountryCode === 'US' && filters.isTaxFreeOnly }" :aria-pressed="currentView === 'generator' && selectedCountryCode === 'US' && !!filters.isTaxFreeOnly">{{ locale === 'zh' ? '美国免税州' : 'US tax-free' }}</button>
+      </template>
+    </Navbar>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8 min-w-0">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-5 sm:space-y-8 min-w-0">
       <!-- Address Radar Monitor View -->
       <AddressMonitorDashboard
         v-if="currentView === 'monitor'"
@@ -19,71 +24,21 @@
         @jump-to-country="handleJumpToCountry"
       />
 
-      <!-- Generator Main View -->
-      <div v-show="currentView === 'generator'" class="space-y-6 sm:space-y-8">
-        <!-- Generation Mode Switcher (Standard Region vs. IP-Based) -->
-        <div class="flex items-center justify-between flex-wrap gap-2.5">
-          <div class="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 w-full sm:w-auto">
-            <button
-              type="button"
-              @click="activeGeneratorTab = 'standard'"
-              class="flex-1 sm:flex-none justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 whitespace-nowrap"
-              :class="activeGeneratorTab === 'standard' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-            >
-              <Compass class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span class="hidden sm:inline">{{ t('ipGen.tabNormal') }}</span>
-              <span class="sm:hidden">{{ locale === 'zh' ? '常规地区' : 'Standard' }}</span>
-            </button>
-            <button
-              type="button"
-              @click="activeGeneratorTab = 'ip'"
-              class="flex-1 sm:flex-none justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 whitespace-nowrap"
-              :class="activeGeneratorTab === 'ip' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-            >
-              <Globe class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span class="hidden sm:inline">{{ t('ipGen.tabTitle') }}</span>
-              <span class="sm:hidden">{{ locale === 'zh' ? '基于 IP' : 'By IP' }}</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500/30 text-indigo-100 font-normal">NEW</span>
-            </button>
+      <div v-show="currentView === 'generator'" class="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] gap-5 items-start">
+        <RegionSelector :selected-country-code="selectedCountryCode" @update:selected-country-code="handleCountryChange" />
+        <div class="space-y-3 min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <button type="button" @click="selectGeneratorTab('standard')" class="generator-tab" :class="{ active: activeGeneratorTab === 'standard' }"><Compass class="w-3.5 h-3.5" />{{ locale === 'zh' ? '按地区生成' : 'By region' }}</button>
+              <button type="button" @click="selectGeneratorTab('ip')" class="generator-tab" :class="{ active: activeGeneratorTab === 'ip' }"><Globe class="w-3.5 h-3.5" />{{ locale === 'zh' ? '按 IP 生成' : 'By IP' }}</button>
+            </div>
+            <button type="button" @click="isBatchModalOpen = true" class="text-xs font-medium text-primary-600 dark:text-primary-400 px-3 py-2">{{ t('nav.batch') }} ↗</button>
           </div>
-
-          <div v-if="activeGeneratorTab === 'ip'" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
-            <span>{{ t('ipGen.tabDesc') }}</span>
-          </div>
-        </div>
-
-        <!-- Tab 1: Standard Region Select & Filter -->
-        <div v-show="activeGeneratorTab === 'standard'" class="space-y-6 sm:space-y-8">
-          <RegionSelector
-            :selected-country-code="selectedCountryCode"
-            :selected-state="selectedState"
-            @update:selected-country-code="handleCountryChange"
-            @update:selected-state="handleStateChange"
-          />
-
-          <FilterControls
-            :filters="filters"
-            :is-generating="isGenerating"
-            @update:filters="filters = $event"
-            @generate="handleGenerate"
-          />
+          <FilterControls v-show="activeGeneratorTab === 'standard'" :filters="filters" :country-code="selectedCountryCode" :selected-state="selectedState" :is-generating="isGenerating" @update:filters="handleFiltersChange" @update:selected-state="handleStateChange" @generate="handleGenerate" />
           <p v-if="addressError" role="alert" class="text-sm text-amber-700 dark:text-amber-300">{{ addressError }}</p>
-        </div>
-
-        <!-- Tab 2: IP Address Based Generator -->
-        <div v-show="activeGeneratorTab === 'ip'">
           <IpAddressCard v-if="activeGeneratorTab === 'ip'" @identity-generated="handleIpIdentityGenerated" @no-address="handleIpNoAddress" />
+          <IdentityCard v-if="currentIdentity" :identity="currentIdentity" :is-fav="isCurrentFavorite" @copy-field="handleCopyFeedback" @toggle-favorite="handleToggleFav" @open-disclaimer="openDisclaimer('disclaimer')" />
         </div>
-
-        <!-- Current Identity Card Display -->
-        <IdentityCard
-          v-if="currentIdentity"
-          :identity="currentIdentity"
-          :is-fav="isCurrentFavorite"
-          @copy-field="handleCopyFeedback"
-          @toggle-favorite="handleToggleFav"
-          @open-disclaimer="openDisclaimer('disclaimer')"
-        />
       </div>
 
       <section aria-labelledby="data-method-heading" class="pt-8 border-t border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -282,17 +237,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { CountryCode, GeneratedIdentity, FilterOptions, AddressMode } from './types/identity';
-import { COUNTRIES } from './data/countries';
+import { COUNTRIES, POPULAR_COUNTRY_CODES } from './data/countries';
 import { generateIdentity } from './services/identityGenerator';
 import {
   getHistory,
   saveToHistory,
   clearHistory,
   getFavorites,
-  toggleFavorite,
-  isIdentityFavorite
+  toggleFavorite
 } from './services/storageService';
 import { useI18n } from './i18n';
 
@@ -318,6 +272,8 @@ import {
 } from 'lucide-vue-next';
 
 const { locale, t } = useI18n();
+
+const popularCountries = POPULAR_COUNTRY_CODES.map(code => COUNTRIES.find(c => c.code === code)!);
 
 const currentView = ref<'generator' | 'monitor'>('generator');
 const activeGeneratorTab = ref<'standard' | 'ip'>('standard');
@@ -349,7 +305,7 @@ const currentCountryName = computed(() => {
 });
 
 const isCurrentFavorite = computed(() => {
-  return currentIdentity.value ? isIdentityFavorite(currentIdentity.value.id) : false;
+  return favoritesList.value.some(item => item.id === currentIdentity.value?.id);
 });
 
 function openDisclaimer(tab = 'all') {
@@ -420,17 +376,35 @@ function handleGenerate() {
   }
 }
 
+function selectPopularCountry(code: CountryCode, taxFree = false) {
+  currentView.value = 'generator';
+  filters.value.isTaxFreeOnly = taxFree;
+  handleCountryChange(code);
+}
+
 function handleCountryChange(code: CountryCode) {
+  activeGeneratorTab.value = 'standard';
+  if (code !== 'US') filters.value.isTaxFreeOnly = false;
   selectedCountryCode.value = code;
   selectedState.value = '';
   filters.value.state = undefined;
   handleGenerate();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function handleStateChange(state: string) {
   selectedState.value = state;
   filters.value.state = state || undefined;
   handleGenerate();
+}
+
+function handleFiltersChange(next: FilterOptions) {
+  filters.value = next;
+  const state = COUNTRIES.find(c => c.code === selectedCountryCode.value)?.popularStates.find(s => s.code === selectedState.value);
+  if (next.isTaxFreeOnly && selectedState.value && !state?.isTaxFree) {
+    selectedState.value = '';
+    filters.value.state = undefined;
+  }
 }
 
 function handleIpIdentityGenerated(identity: GeneratedIdentity) {
@@ -449,18 +423,16 @@ function handleIpNoAddress() {
   if (activeGeneratorTab.value === 'ip') currentIdentity.value = null;
 }
 
-watch(activeGeneratorTab, tab => {
+function selectGeneratorTab(tab: 'standard' | 'ip') {
+  if (activeGeneratorTab.value === tab) return;
+  activeGeneratorTab.value = tab;
   currentIdentity.value = null;
   addressError.value = '';
   if (tab === 'standard') handleGenerate();
-});
+}
 
 function handleJumpToCountry(code: CountryCode) {
-  selectedCountryCode.value = code;
-  selectedState.value = '';
-  filters.value.state = undefined;
-  currentView.value = 'generator';
-  handleGenerate();
+  selectPopularCountry(code);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   const countryName = COUNTRIES.find(c => c.code === code)?.nameZh || code;
   if (toastRef.value) {
@@ -477,9 +449,11 @@ function handleToggleFav(identity: GeneratedIdentity) {
 }
 
 function handleSelectIdentity(identity: GeneratedIdentity) {
+  activeGeneratorTab.value = 'standard';
   currentIdentity.value = identity;
   selectedCountryCode.value = identity.countryCode;
   selectedState.value = identity.address.state;
+  filters.value = { ...filters.value, state: identity.address.state, addressMode: identity.address.addressMode || 'residential', isTaxFreeOnly: false };
   if (toastRef.value) {
     toastRef.value.show(t('history.apply'));
   }
@@ -521,3 +495,10 @@ onUnmounted(() => {
   window.removeEventListener('hashchange', handleHashChange);
 });
 </script>
+
+<style scoped>
+.region-nav { @apply px-3 py-2 text-xs font-medium whitespace-nowrap rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors; }
+.region-nav.active { @apply bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300; }
+.generator-tab { @apply inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400; }
+.generator-tab.active { @apply bg-white dark:bg-slate-700 text-primary-700 dark:text-primary-300 shadow-sm; }
+</style>

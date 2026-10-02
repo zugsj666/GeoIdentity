@@ -1,210 +1,29 @@
 <template>
-  <div class="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
-    <!-- Mode Selection Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
-      <div class="flex items-center gap-2">
-        <span class="p-1.5 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 font-semibold text-xs flex items-center gap-1.5">
-          <Compass class="w-3.5 h-3.5" />
-          <span>{{ t('addressMode.title') }}</span>
-        </span>
-        <span class="text-xs text-slate-500 dark:text-slate-400">
-          {{ t('addressMode.label') }}
-        </span>
-      </div>
-
-      <!-- Mode Comparison Toggle -->
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <a href="/methodology.html" class="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium">{{ t('footer.methodology') }}</a>
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3 sm:p-4 shadow-sm space-y-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2 text-sm font-bold"><span>{{ currentCountry.flag }}</span>{{ locale === 'zh' ? currentCountry.nameZh : currentCountry.nameEn }}</div>
+      <select :value="selectedState" @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)" class="app-select !h-9 flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto" :aria-label="t('regions.customState')">
+        <option value="">{{ t('regions.selectState') }}</option>
+        <option v-for="state in availableStates" :key="state.code" :value="state.code">{{ locale === 'zh' ? state.nameZh : state.nameEn }} ({{ state.code }})</option>
+      </select>
         <button
           type="button"
-          @click="showModeGuide = !showModeGuide"
-          class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto font-medium"
+          @click="$emit('generate')"
+          :disabled="isGenerating"
+          class="w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
         >
-          <HelpCircle class="w-3.5 h-3.5" />
-          <span>{{ t('addressMode.modeComparison') }}</span>
-          <ChevronDown class="w-3 h-3 transition-transform" :class="{ 'rotate-180': showModeGuide }" />
+          <Sparkles class="w-4 h-4" :class="{ 'animate-spin': isGenerating }" />
+          <span>{{ isGenerating ? t('filter.generating') : (locale === 'zh' ? '生成' : 'Generate') }}</span>
         </button>
-      </div>
+
     </div>
-
-    <!-- 3 Distinct Address Mode Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-      <!-- 1. 高精度真实地标种子库 (Curated Landmark Seeds) -->
-      <button
-        type="button"
-        @click="updateMode('landmark')"
-        :class="[
-          'relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group',
-          currentMode === 'landmark'
-            ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-500/80 shadow-xs ring-1 ring-blue-500/30'
-            : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700'
-        ]"
-      >
-        <div class="flex items-start justify-between gap-1.5 sm:gap-2 mb-2">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <div
-              :class="[
-                'p-1.5 rounded-lg shrink-0',
-                currentMode === 'landmark' ? 'bg-blue-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              ]"
-            >
-              <Building2 class="w-4 h-4" />
-            </div>
-            <span
-              class="text-xs font-bold tracking-tight truncate"
-              :class="currentMode === 'landmark' ? 'text-blue-950 dark:text-blue-100' : 'text-slate-800 dark:text-slate-200'"
-            >
-              <span class="sm:hidden">{{ t('addressMode.landmarkShort') }}</span>
-              <span class="hidden sm:inline">{{ t('addressMode.landmark') }}</span>
-            </span>
-          </div>
-          <span
-            v-if="currentMode === 'landmark'"
-            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500 text-white shadow-xs shrink-0 whitespace-nowrap mt-0.5"
-          >
-            {{ t('addressMode.active') }}
-          </span>
-        </div>
-        <p
-          class="text-[11px] leading-relaxed"
-          :class="currentMode === 'landmark' ? 'text-blue-800/80 dark:text-blue-200/70' : 'text-slate-500 dark:text-slate-400'"
-        >
-          {{ t('addressMode.landmarkDesc') }}
-        </p>
-      </button>
-
-      <!-- 2. 方案A：真实街道门牌合法区间衍生 (Street Derivation) -->
-      <button
-        type="button"
-        @click="updateMode('derivation')"
-        :class="[
-          'relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group',
-          currentMode === 'derivation'
-            ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500/80 shadow-xs ring-1 ring-emerald-500/30'
-            : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700'
-        ]"
-      >
-        <div class="flex items-start justify-between gap-1.5 sm:gap-2 mb-2">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <div
-              :class="[
-                'p-1.5 rounded-lg shrink-0',
-                currentMode === 'derivation' ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              ]"
-            >
-              <Route class="w-4 h-4" />
-            </div>
-            <span
-              class="text-xs font-bold tracking-tight truncate"
-              :class="currentMode === 'derivation' ? 'text-emerald-950 dark:text-emerald-100' : 'text-slate-800 dark:text-slate-200'"
-            >
-              <span class="sm:hidden">{{ t('addressMode.derivationShort') }}</span>
-              <span class="hidden sm:inline">{{ t('addressMode.derivation') }}</span>
-            </span>
-          </div>
-          <span
-            v-if="currentMode === 'derivation'"
-            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500 text-white shadow-xs shrink-0 whitespace-nowrap mt-0.5"
-          >
-            {{ t('addressMode.active') }}
-          </span>
-        </div>
-        <p
-          class="text-[11px] leading-relaxed"
-          :class="currentMode === 'derivation' ? 'text-emerald-800/80 dark:text-emerald-200/70' : 'text-slate-500 dark:text-slate-400'"
-        >
-          {{ t('addressMode.derivationDesc') }}
-        </p>
-      </button>
-
-      <!-- 3. 方案B：全球真实住宅/居民独栋地址库 (Residential Pool) -->
-      <button
-        type="button"
-        @click="updateMode('residential')"
-        :class="[
-          'relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group',
-          currentMode === 'residential'
-            ? 'bg-purple-50/70 dark:bg-purple-950/40 border-purple-500/80 shadow-xs ring-1 ring-purple-500/30'
-            : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700'
-        ]"
-      >
-        <div class="flex items-start justify-between gap-1.5 sm:gap-2 mb-2">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <div
-              :class="[
-                'p-1.5 rounded-lg shrink-0',
-                currentMode === 'residential' ? 'bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              ]"
-            >
-              <Home class="w-4 h-4" />
-            </div>
-            <span
-              class="text-xs font-bold tracking-tight truncate"
-              :class="currentMode === 'residential' ? 'text-purple-950 dark:text-purple-100' : 'text-slate-800 dark:text-slate-200'"
-            >
-              <span class="sm:hidden">{{ t('addressMode.residentialShort') }}</span>
-              <span class="hidden sm:inline">{{ t('addressMode.residential') }}</span>
-            </span>
-          </div>
-          <span
-            v-if="currentMode === 'residential'"
-            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500 text-white shadow-xs shrink-0 whitespace-nowrap mt-0.5"
-          >
-            {{ t('addressMode.active') }}
-          </span>
-        </div>
-        <p
-          class="text-[11px] leading-relaxed"
-          :class="currentMode === 'residential' ? 'text-purple-800/80 dark:text-purple-200/70' : 'text-slate-500 dark:text-slate-400'"
-        >
-          {{ t('addressMode.residentialDesc') }}
-        </p>
-      </button>
-      <button type="button" @click="updateMode('sourced')"
-        class="text-left p-4 rounded-2xl border transition-all"
-        :class="currentMode === 'sourced' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 text-amber-900 dark:text-amber-100' : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'">
-        <span class="flex items-center gap-2 text-xs font-bold"><MapPin class="w-4 h-4" />{{ t('addressMode.sourcedShort') }}</span>
-        <span class="block text-[11px] leading-relaxed mt-2">{{ t('addressMode.sourcedDesc') }}</span>
-      </button>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" :aria-label="t('addressMode.title')">
+      <button v-for="mode in modes" :key="mode.id" type="button" @click="updateMode(mode.id)" :aria-pressed="currentMode === mode.id" :title="t('addressMode.' + mode.desc)" class="mode-button" :data-color="mode.color" :class="{ active: currentMode === mode.id }"><component :is="mode.icon" class="w-4 h-4 shrink-0" /><span>{{ t('addressMode.' + mode.label) }}</span></button>
     </div>
-
-    <!-- Collapsible Comparison Guide -->
-    <div
-      v-if="showModeGuide"
-      class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-2.5 transition-all"
-    >
-      <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-        <Info class="w-4 h-4 text-primary-500" />
-        <span>{{ t('addressMode.guideTitle') }}</span>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
-        <div class="p-3 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-          <span class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-            <Building2 class="w-3.5 h-3.5" />
-            <span>{{ t('addressMode.landmarkShort') }}</span>
-          </span>
-          <p>{{ t('addressMode.landmarkTarget') }}</p>
-        </div>
-        <div class="p-3 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-          <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <Route class="w-3.5 h-3.5" />
-            <span>{{ t('addressMode.derivationShort') }}</span>
-          </span>
-          <p>{{ t('addressMode.derivationTarget') }}</p>
-        </div>
-        <div class="p-3 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-          <span class="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
-            <Home class="w-3.5 h-3.5" />
-            <span>{{ t('addressMode.residentialShort') }}</span>
-          </span>
-          <p>{{ t('addressMode.residentialTarget') }}</p>
-        </div>
-      </div>
-    </div>
-
     <!-- Bottom Secondary Filters & Generate Button Bar -->
-    <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4">
-      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+<details class="text-xs text-slate-500 dark:text-slate-400">
+      <summary class="cursor-pointer w-fit py-1 font-medium">{{ locale === 'zh' ? '更多筛选' : 'More filters' }}</summary>
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto mt-3">
         <!-- Gender Filter -->
         <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
           <button
@@ -279,52 +98,39 @@
         </button>
       </div>
 
-      <!-- Generate Trigger Button -->
-      <div class="w-full lg:w-auto flex items-center justify-end">
-        <button
-          type="button"
-          @click="$emit('generate')"
-          :disabled="isGenerating"
-          class="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 via-teal-500 to-emerald-500 hover:from-primary-700 hover:to-emerald-600 shadow-md shadow-primary-500/20 active:scale-95 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
-        >
-          <Sparkles class="w-4 h-4" :class="{ 'animate-spin': isGenerating }" />
-          <span>{{ isGenerating ? t('filter.generating') : t('filter.generateBtn') }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
+    </details>
+  </section>
 </template>
-
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import {
-  Sparkles,
-  MapPin,
-  Zap,
-  Building2,
-  Route,
-  Home,
-  Compass,
-  HelpCircle,
-  ChevronDown,
-  Info
-} from 'lucide-vue-next';
-import type { FilterOptions, AddressMode } from '../types/identity';
+import { computed } from 'vue';
+import { Sparkles, MapPin, Zap, Building2, Route, Home } from 'lucide-vue-next';
+import type { FilterOptions, AddressMode, CountryCode } from '../types/identity';
+import { COUNTRIES } from '../data/countries';
 import { useI18n } from '../i18n';
 
 const props = defineProps<{
   filters: FilterOptions;
+  countryCode: CountryCode;
+  selectedState: string;
   isGenerating?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:filters', filters: FilterOptions): void;
   (e: 'generate'): void;
+  (e: 'update:selectedState', state: string): void;
 }>();
 
-const { t } = useI18n();
+const { locale, t } = useI18n();
 
-const showModeGuide = ref(false);
+const currentCountry = computed(() => COUNTRIES.find(c => c.code === props.countryCode)!);
+const availableStates = computed(() => currentCountry.value.popularStates.filter(state => !props.filters.isTaxFreeOnly || state.isTaxFree));
+const modes = [
+  { id: 'landmark', icon: Building2, label: 'landmarkShort', desc: 'landmarkDesc', color: 'blue' },
+  { id: 'derivation', icon: Route, label: 'derivationShort', desc: 'derivationDesc', color: 'emerald' },
+  { id: 'residential', icon: Home, label: 'residentialShort', desc: 'residentialDesc', color: 'purple' },
+  { id: 'sourced', icon: MapPin, label: 'sourcedShort', desc: 'sourcedDesc', color: 'amber' }
+] as const;
 
 const currentMode = computed<AddressMode>(() => props.filters.addressMode || 'residential');
 
@@ -348,3 +154,11 @@ function toggleTaxFreeOnly() {
   emit('generate');
 }
 </script>
+
+<style scoped>
+.mode-button { @apply inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 transition-colors; }
+.mode-button[data-color="blue"].active { @apply border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300; }
+.mode-button[data-color="emerald"].active { @apply border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300; }
+.mode-button[data-color="purple"].active { @apply border-purple-500 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300; }
+.mode-button[data-color="amber"].active { @apply border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300; }
+</style>

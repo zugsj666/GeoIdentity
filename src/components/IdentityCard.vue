@@ -1,166 +1,32 @@
 <template>
   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors duration-200">
-    <!-- Top Identity Hero Header -->
-    <div class="p-4 sm:p-8 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900 border-b border-slate-200/80 dark:border-slate-800">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
-        <!-- Left: Avatar and Names -->
-        <div class="flex items-center gap-3.5 sm:gap-5 min-w-0 w-full sm:w-auto">
-          <div class="relative group shrink-0">
-            <img
-              :src="identity.basic.avatar"
-              :alt="identity.basic.fullName"
-              class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary-50 dark:bg-primary-950/60 p-1 border-2 border-primary-500/20 dark:border-primary-500/30 object-cover shadow-md shadow-primary-500/10"
-            />
-            <span
-              :class="[
-                'absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[10px] sm:text-xs font-bold rounded-full text-white shadow-sm ring-2 ring-white dark:ring-slate-900',
-                identity.basic.gender === 'male' ? 'bg-blue-500' : 'bg-rose-500'
-              ]"
-              :title="identity.basic.gender === 'male' ? labels.genderMale : labels.genderFemale"
-            >
-              {{ displayGenderBadge }}
-            </span>
-          </div>
-
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 class="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight break-words">
-                {{ displayFullName }}
-              </h1>
-              
-              <!-- Phonetic, Latin or Native transcription if exists -->
-              <span
-                v-if="displaySubName"
-                class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400"
-              >
-                ({{ displaySubName }})
-              </span>
-
-              <!-- Country Flag Tag -->
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                <span>{{ countryFlag }}</span>
-                <span>{{ displayCountryName }}</span>
-              </span>
-
-              <!-- Tax Free Tag if applicable -->
-              <span
-                v-if="identity.address.isTaxFree"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse"
-              >
-                <Zap class="w-3 h-3 fill-amber-500 text-amber-500" />
-                <span>{{ displayTaxRate }}</span>
-              </span>
-
-              <!-- Synthetic Test Profile Badge -->
-              <button
-                type="button"
-                @click="$emit('open-disclaimer')"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
-                :title="t('card.syntheticBadgeTip')"
-              >
-                <ShieldCheck class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span>{{ t('card.syntheticBadge') }}</span>
-              </button>
-            </div>
-
-            <!-- Meta Badges -->
-            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
-              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium">
-                {{ identity.basic.age }} {{ labels.ageUnit }} ({{ identity.basic.birthDate }})
-              </span>
-              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
-                {{ identity.basic.zodiacSign }}
-              </span>
-              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
-                {{ identity.basic.bloodType }}
-              </span>
-              <!-- Timezone & Local Time -->
-              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
-                <Clock class="w-3 h-3 text-slate-400" />
-                <span>{{ identity.address.timezoneCode || 'UTC' }} · {{ currentTimeStr }}</span>
-              </span>
-            </div>
-          </div>
+    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900">
+      <h1 class="text-sm font-bold text-slate-900 dark:text-white">{{ locale === 'zh' ? '生成结果' : 'Generated result' }}</h1>
+      <div class="flex items-center gap-2">
+        <div class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[11px] font-medium">
+          <button v-for="language in (['zh', 'en', 'local'] as const)" :key="language" type="button" @click="cardLang = language" class="px-2 py-1 rounded-md" :class="cardLang === language ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'" :aria-pressed="cardLang === language">{{ language === 'zh' ? '中文' : language === 'en' ? 'EN' : localLangButtonText }}</button>
         </div>
-
-        <!-- Right: Actions (Card Language Switcher & Copy All Profile & Favorite) -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
-          <!-- Card Profile Language Segmented Switcher -->
-          <div class="inline-flex items-center justify-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs font-semibold shadow-xs">
-            <button
-              type="button"
-              @click="cardLang = 'zh'"
-              :class="[
-                'flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg transition-all cursor-pointer select-none text-center',
-                cardLang === 'zh'
-                  ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-300 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              ]"
-              :title="t('card.langZhTip')"
-            >
-              {{ t('card.langZh') }}
-            </button>
-            <button
-              type="button"
-              @click="cardLang = 'en'"
-              :class="[
-                'flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg transition-all cursor-pointer select-none text-center',
-                cardLang === 'en'
-                  ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-300 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              ]"
-              :title="t('card.langEnTip')"
-            >
-              {{ t('card.langEn') }}
-            </button>
-            <button
-              type="button"
-              @click="cardLang = 'local'"
-              :class="[
-                'flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg transition-all cursor-pointer select-none flex items-center justify-center gap-1 text-center',
-                cardLang === 'local'
-                  ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-300 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              ]"
-              :title="`${t('card.langLocalTip')} (${localMeta?.langLabel || ''})`"
-            >
-              <span>{{ localLangButtonText }}</span>
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              @click="handleCopyAll"
-              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer"
-            >
-              <Check v-if="copiedAll" class="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-              <Copy v-else class="w-4 h-4" />
-              <span>{{ copiedAll ? t('card.copiedAll') : t('card.copyAll') }}</span>
-            </button>
-
-            <button
-              type="button"
-              @click="handleToggleFav"
-              :class="[
-                'p-2.5 rounded-xl border transition-all cursor-pointer shrink-0',
-                isFav
-                  ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-600 text-amber-500'
-                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-amber-500'
-              ]"
-              :title="isFav ? t('card.unfavorite') : t('card.favorite')"
-            >
-              <Star class="w-5 h-5" :class="{ 'fill-amber-400 text-amber-400': isFav }" />
-            </button>
-          </div>
-        </div>
+        <button type="button" @click="handleCopyAll" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900"><Check v-if="copiedAll" class="w-3.5 h-3.5 text-emerald-400" /><Copy v-else class="w-3.5 h-3.5" />{{ locale === 'zh' ? '复制全部' : 'Copy all' }}</button>
+        <button type="button" @click="handleToggleFav" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700" :aria-label="isFav ? t('card.unfavorite') : t('card.favorite')"><Star class="w-4 h-4" :class="isFav ? 'fill-amber-400 text-amber-400' : 'text-slate-400'" /></button>
       </div>
     </div>
-
-    <!-- Main Content Sections Grid -->
-    <div class="p-4 sm:p-8 space-y-6 sm:space-y-8">
+    <section class="p-3 sm:p-4 space-y-3" :aria-label="locale === 'zh' ? '生成结果，点击字段复制' : 'Generated result, click a field to copy'">
+      <div class="flex items-center justify-between text-xs text-slate-400"><span>{{ locale === 'zh' ? '点击即复制' : 'Click to copy' }}</span><span class="flex items-center gap-1"><Copy class="w-3 h-3" />{{ locale === 'zh' ? '点击任意一行复制' : 'Click any row to copy' }}</span></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <button v-for="field in quickFields" :key="field.key" type="button" @click="copyField(field.value, field.key)" class="copy-row group" :class="{ 'sm:col-span-2': field.key === 'address' || field.key === 'email' }" :aria-label="(locale === 'zh' ? '复制' : 'Copy ') + field.label + ': ' + field.value">
+          <span class="text-xs text-slate-400 text-left shrink-0">{{ field.label }}<span v-if="field.key === 'email'" class="ml-1 text-[10px] text-amber-600 dark:text-amber-400">{{ labels.emailNotice }}</span></span>
+          <span class="min-w-0 flex-1 text-right text-sm font-semibold text-slate-800 dark:text-slate-100 break-words">{{ field.value || '—' }}</span>
+          <Check v-if="copiedKey === field.key" class="w-3.5 h-3.5 text-emerald-500 shrink-0" /><Copy v-else class="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-500 shrink-0" />
+        </button>
+      </div>
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-[11px] text-slate-400">{{ t('card.syntheticBadge') }} · {{ locale === 'zh' ? '投递与 AVS 未核验' : 'Delivery & AVS unverified' }}</span>
+        <button type="button" @click="scrollToMap" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-teal-500 text-white text-xs font-semibold shrink-0"><MapPin class="w-3.5 h-3.5" />{{ locale === 'zh' ? '查看地图' : 'View map' }} ↓</button>
+      </div>
+    </section>
+    <div class="p-4 sm:p-5 space-y-6 border-t border-slate-200 dark:border-slate-800">
       <!-- Section 1: Real Address on Google Maps -->
-      <div class="min-w-0 max-w-full">
+      <div ref="mapSection" class="min-w-0 max-w-full scroll-mt-24">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex items-center gap-2">
             <div class="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
@@ -222,68 +88,11 @@
           </span>
         </div>
 
-        <!-- Address Cards 4-Column Grid (Line 1, Line 2, City/State, Postcode) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-          <!-- Street Address (Line 1) -->
-          <div
-            @click="copyField(identity.address.addressLine1 || identity.address.street, 'street')"
-            class="group p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50/60 dark:bg-slate-800/40 cursor-pointer transition-all hover:shadow-sm"
-          >
-            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
-              <span>{{ labels.street }}</span>
-              <Check v-if="copiedKey === 'street'" class="w-3.5 h-3.5 text-emerald-500" />
-              <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
-            </div>
-            <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 break-words">
-              {{ identity.address.addressLine1 || identity.address.street }}
-            </div>
-          </div>
-
-          <!-- Unit / Suite (Line 2) -->
-          <div
-            @click="copyField(identity.address.addressLine2 || '', 'suite')"
-            class="group p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50/60 dark:bg-slate-800/40 cursor-pointer transition-all hover:shadow-sm"
-          >
-            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
-              <span>{{ labels.addressLine2 }}</span>
-              <Check v-if="copiedKey === 'suite'" class="w-3.5 h-3.5 text-emerald-500" />
-              <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
-            </div>
-            <div class="text-sm font-semibold text-primary-600 dark:text-primary-400 font-mono">
-              {{ identity.address.addressLine2 || 'N/A' }}
-            </div>
-          </div>
-
-          <!-- City & State -->
-          <div
-            @click="copyField(`${identity.address.city}, ${identity.address.stateFull || identity.address.state}`, 'city')"
-            class="group p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50/60 dark:bg-slate-800/40 cursor-pointer transition-all hover:shadow-sm"
-          >
-            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
-              <span>{{ labels.cityState }}</span>
-              <Check v-if="copiedKey === 'city'" class="w-3.5 h-3.5 text-emerald-500" />
-              <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
-            </div>
-            <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
-              {{ identity.address.city }}, {{ identity.address.stateFull || identity.address.state }}
-            </div>
-          </div>
-
-          <!-- Postcode & Country -->
-          <div
-            @click="copyField(identity.address.postcode, 'postcode')"
-            class="group p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50/60 dark:bg-slate-800/40 cursor-pointer transition-all hover:shadow-sm"
-          >
-            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
-              <span>{{ labels.postcode }}</span>
-              <Check v-if="copiedKey === 'postcode'" class="w-3.5 h-3.5 text-emerald-500" />
-              <Copy v-else class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity" />
-            </div>
-            <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 font-mono">
-              {{ identity.address.postcode }}
-            </div>
-          </div>
+        <!-- Google Maps Live Embed Viewer -->
+        <div class="min-w-0 max-w-full overflow-hidden">
+          <GoogleMapEmbed :address="identity.address" />
         </div>
+      </div>
 
         <!-- Dedicated eCommerce / Forwarder Standard Format Card -->
         <div class="mb-4 p-4 rounded-2xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -307,12 +116,94 @@
           </button>
         </div>
 
-        <!-- Google Maps Live Embed Viewer -->
-        <div class="min-w-0 max-w-full overflow-hidden">
-          <GoogleMapEmbed :address="identity.address" />
-        </div>
-      </div>
+    <!-- Top Identity Hero Header -->
+    <div class="p-4 sm:p-5 bg-gradient-to-b from-slate-50/90 to-white dark:from-slate-800/40 dark:to-slate-900 border-b border-slate-200/80 dark:border-slate-800">
+      <div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 sm:gap-6">
+        <!-- Left: Avatar and Names -->
+        <div class="flex items-center gap-3.5 sm:gap-5 min-w-0 w-full sm:w-auto">
+          <div class="relative group shrink-0">
+            <img
+              :src="identity.basic.avatar"
+              :alt="identity.basic.fullName"
+              class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-primary-50 dark:bg-primary-950/60 p-1 border-2 border-primary-500/20 dark:border-primary-500/30 object-cover shadow-md shadow-primary-500/10"
+            />
+            <span
+              :class="[
+                'absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[10px] sm:text-xs font-bold rounded-full text-white shadow-sm ring-2 ring-white dark:ring-slate-900',
+                identity.basic.gender === 'male' ? 'bg-blue-500' : 'bg-rose-500'
+              ]"
+              :title="identity.basic.gender === 'male' ? labels.genderMale : labels.genderFemale"
+            >
+              {{ displayGenderBadge }}
+            </span>
+          </div>
 
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight break-words">
+                {{ displayFullName }}
+              </h1>
+
+              <!-- Phonetic, Latin or Native transcription if exists -->
+              <span
+                v-if="displaySubName"
+                class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400"
+              >
+                ({{ displaySubName }})
+              </span>
+
+              <!-- Country Flag Tag -->
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <span>{{ countryFlag }}</span>
+                <span>{{ displayCountryName }}</span>
+              </span>
+
+              <!-- Tax Free Tag if applicable -->
+              <span
+                v-if="identity.address.isTaxFree"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700 "
+              >
+                <Zap class="w-3 h-3 fill-amber-500 text-amber-500" />
+                <span>{{ displayTaxRate }}</span>
+              </span>
+
+              <!-- Synthetic Test Profile Badge -->
+              <button
+                type="button"
+                @click="$emit('open-disclaimer')"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
+                :title="t('card.syntheticBadgeTip')"
+              >
+                <ShieldCheck class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>{{ t('card.syntheticBadge') }}</span>
+              </button>
+            </div>
+
+            <!-- Meta Badges -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium">
+                {{ identity.basic.age }} {{ labels.ageUnit }} ({{ identity.basic.birthDate }})
+              </span>
+              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                {{ identity.basic.zodiacSign }}
+              </span>
+              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                {{ identity.basic.bloodType }}
+              </span>
+              <!-- Timezone & Local Time -->
+              <span class="px-2 py-0.5 text-[11px] sm:text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
+                <Clock class="w-3 h-3 text-slate-400" />
+                <span>{{ identity.address.timezoneCode || 'UTC' }} · {{ currentTimeStr }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <button v-for="field in extraFields" :key="field.key" type="button" @click="copyField(field.value, field.key)" class="copy-row group" :aria-label="(locale === 'zh' ? '复制' : 'Copy ') + field.label + ': ' + field.value"><span class="text-xs text-slate-400">{{ field.label }}</span><span class="text-sm font-semibold break-words min-w-0">{{ field.value || '—' }}</span><Copy class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-auto" /></button>
+      </div>
       <!-- Section 2: Contact & Document Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Contact Details -->
@@ -726,6 +617,33 @@ const displayDocTypeName = computed(() => {
   return props.identity.document.typeName;
 });
 
+const mapSection = ref<HTMLElement | null>(null);
+function scrollToMap() {
+  mapSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+const quickFields = computed(() => {
+  const i = props.identity;
+  const zh = cardLang.value === 'zh';
+  return [
+    { key: 'firstName', label: zh ? '名 / First Name' : 'First Name', value: i.basic.firstName },
+    { key: 'lastName', label: zh ? '姓 / Last Name' : 'Last Name', value: i.basic.lastName },
+    { key: 'gender', label: zh ? '性别 / Gender' : 'Gender', value: i.basic.gender === 'male' ? labels.value.genderMale : labels.value.genderFemale },
+    { key: 'phone', label: labels.value.phone, value: i.contact.phoneFormatted },
+    { key: 'email', label: labels.value.email, value: i.contact.email },
+    { key: 'street', label: labels.value.street, value: i.address.addressLine1 || i.address.street },
+    { key: 'city', label: zh ? '城市 / City' : 'City', value: i.address.city },
+    { key: 'state', label: zh ? '州 / State' : 'State / Province', value: i.address.stateFull || i.address.state },
+    { key: 'postcode', label: labels.value.postcode, value: i.address.postcode },
+    { key: 'address', label: zh ? '完整地址' : 'Full Address', value: fullAddressString.value }
+  ];
+});
+
+const extraFields = computed(() => [
+  { key: 'birthDate', label: cardLang.value === 'zh' ? '生日' : 'Birthday', value: props.identity.basic.birthDate },
+  { key: 'suite', label: labels.value.addressLine2, value: props.identity.address.addressLine2 || '' },
+  { key: 'country', label: cardLang.value === 'zh' ? '国家' : 'Country', value: displayCountryName.value }
+]);
+
 const copiedKey = ref<string | null>(null);
 const copiedAll = ref(false);
 
@@ -852,49 +770,44 @@ function fallbackCopy(text: string) {
   textArea.focus();
   textArea.select();
   try {
-    document.execCommand('copy');
-  } catch (e) {
-    console.warn('Fallback copy failed', e);
+    if (!document.execCommand('copy')) throw new Error('Clipboard unavailable');
+  } finally {
+    textArea.remove();
   }
-  document.body.removeChild(textArea);
 }
 
-async function copyField(text: string, key: string) {
+async function copyField(text: string, key: string): Promise<boolean> {
+  if (!text) return false;
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else fallbackCopy(text);
+    } catch {
       fallbackCopy(text);
     }
-  } catch (_e) {
-    fallbackCopy(text);
+  } catch {
+    emit('copy-field', text, locale.value === 'zh' ? '复制失败，请检查浏览器剪贴板权限' : 'Copy failed. Check clipboard permissions.');
+    return false;
   }
   copiedKey.value = key;
   emit('copy-field', text, t('card.copiedField'));
-  setTimeout(() => {
-    if (copiedKey.value === key) copiedKey.value = null;
-  }, 1800);
+  setTimeout(() => { if (copiedKey.value === key) copiedKey.value = null; }, 1800);
+  return true;
 }
 
 async function handleCopyAll() {
-  const text = formatFullIdentityText(props.identity, cardLang.value);
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      fallbackCopy(text);
-    }
-  } catch (_e) {
-    fallbackCopy(text);
+  if (await copyField(formatFullIdentityText(props.identity, cardLang.value), 'all')) {
+    copiedAll.value = true;
+    setTimeout(() => { copiedAll.value = false; }, 2000);
   }
-  copiedAll.value = true;
-  emit('copy-field', text, t('card.copiedAll'));
-  setTimeout(() => {
-    copiedAll.value = false;
-  }, 2000);
 }
 
 function handleToggleFav() {
   emit('toggle-favorite', props.identity);
 }
 </script>
+
+<style scoped>
+.copy-row { @apply flex items-center gap-3 w-full min-w-0 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500; }
+@media (max-width: 639px) { .copy-row { @apply flex-wrap gap-2; } .copy-row > span:nth-child(2) { @apply text-xs; } }
+</style>

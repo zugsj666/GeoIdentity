@@ -1,5 +1,11 @@
 # GeoIdentity - 多地区地址样本与合成测试身份
 
+此 Fork 保留原项目 UI 风格，改为常用地区顶部导航、其他地区左侧列表、四种方案按钮与逐行复制结果。生成按钮始终直接显示，额外筛选默认折叠；地图与扩展资料位于结果下方，手机端地区列表可横向滚动。
+
+本地运行：`npm ci` → `npm run dev`。检查：`npm run build`、`npm test`、`npm run test:ui`。
+
+下方演示域名和部署账户说明来自上游。本 Fork 尚未发布到这些域名；部署时使用自己的 Pages 项目和域名。
+
 <p align="center">
   <img src="public/favicon.svg" width="72" height="72" alt="GeoIdentity Logo" />
 </p>

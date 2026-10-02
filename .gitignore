@@ -40,3 +40,5 @@ Thumbs.db
 
 # Temporary test artifacts
 test_avatar_elizabeth.svg
+
+.npm-cache/
